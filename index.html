@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inside Jupiter</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #000; }
+        canvas { display: block; }
+        #ui {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            color: #00ffaa;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            pointer-events: none;
+            text-shadow: 0 0 15px rgba(0,255,170,0.4);
+            user-select: none;
+            z-index: 10;
+        }
+        h1 { margin: 0; font-weight: 300; font-size: 24px; letter-spacing: 4px; text-transform: uppercase; }
+        p { opacity: 0.7; font-size: 14px; margin-top: 8px; font-weight: 300; }
+    </style>
+</head>
+<body>
+    <div id="ui">
+        <h1>Jupiter Interior</h1>
+        <p>Navigate the surface from the center • Move mouse to look around</p>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+
+        // --- Configuration ---
+        const SENSITIVITY = 2.5; // Max rotation radians
+        const EASING = 0.07;     // Smoothing factor
+        const SPHERE_RADIUS = 100;
+
+        // --- Scene Setup ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.body.appendChild(renderer.domElement);
+
+        // --- The Interior Sphere ---
+        // Use SphereGeometry and THREE.BackSide to make the surface visible from the inside
+        const geometry = new THREE.SphereGeometry(SPHERE_RADIUS, 64, 64);
+        const material = new THREE.MeshBasicMaterial({ 
+            color: 0x00ffaa, 
+            wireframe: true,
+            side: THREE.BackSide 
+        });
+        
+        const sphere = new THREE.Mesh(geometry, material);
+        scene.add(sphere);
+
+        // Camera at the origin
+        camera.position.set(0, 0, 0);
+
+        // --- Interaction ---
+        let mouseX = 0; 
+        let mouseY = 0; 
+
+        window.addEventListener('mousemove', (event) => {
+            // Normalize cursor position to range [-0.5, 0.5]
+            mouseX = (event.clientX / window.innerWidth) - 0.5;
+            mouseY = (event.clientY / window.innerHeight) - 0.5;
+        });
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // --- Render Loop ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Azimuth (Y-rotation) and Elevation (X-rotation)
+            // Movement is proportional to eccentricity from center
+            const targetRotY = mouseX * SENSITIVITY;
+            const targetRotX = mouseY * SENSITIVITY;
+
+            // Smooth interpolation for a high-quality feel
+            camera.rotation.y += (targetRotY - camera.rotation.y) * EASING;
+            camera.rotation.x += (targetRotX - camera.rotation.x) * EASING;
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
