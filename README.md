@@ -30,31 +30,51 @@ The visual language of this project is inspired by futuristic planetary observat
 
 ### Navigation & Motion
 
-- **Mouse Steering**: The mouse acts as a directional accelerator. Unlike traditional joysticks, the system uses a **Saccade-Safe Anchor**. The acceleration is determined by the distance between your cursor and a virtual neutral point that smoothly follows your mouse. This allows you to "jump" the cursor to a new position (saccade) to realign your control without inducing violent camera whips.
-- **Kinetic Drift**: The movement is governed by an **Ornstein-Uhlenbeck Diffusion process**. This ensures that the camera naturally drifts back toward a state of rest (mean reversion)—specifically converging to the actual self-rotation speed of Jupiter—while introducing a subtle, organic volatility (simulating planetary winds).
-- **Vim Motion Keys**:
-    - `h`: Rotate Left
-    - `l`: Rotate Right
-    - `k`: Rotate Up
-    - `j`: Rotate Down
+- **Mouse Steering**: the pointer acts as a directional accelerator. Push the pointer
+  **down** to look **down** and right to look right (the natural, non-inverted mapping); the
+  further from the centre, the faster the turn, up to the speed cap. Holding a mouse button
+  multiplies the authority for a deliberate manoeuvre.
+- **Saccade-Safe Anchor**: the neutral point of the controller follows the cursor, so you can
+  "jump" the pointer to a new position without inducing a violent camera whip.
+- **Kinetic Drift**: motion is governed by an **Ornstein–Uhlenbeck** process — mean reversion
+  back to Jupiter's own prograde spin plus a subtle organic volatility, which gives the
+  weightless, drifting feel.
+- **Circular motion**: azimuth λ and elevation β are free-running angles. The shell **wraps** —
+  at ±180° in azimuth and continuously **over both poles** in elevation — so there is never a
+  wall to hit; `d(λ+180°, 180°−β)` is the same line of sight as `d(λ, β)`, so no direction is
+  ever seen twice.
+- **Keyboard Motion (`H J K L`)**: `H` turn left, `L` turn right, `K` look up, `J` look down.
 - **Dynamic Zoom**:
-    - `S`: Zoom In (Decrease FOV)
-    - `D`: Zoom Out (Increase FOV)
-    - **Trackpad/Wheel**: Pinch or scroll to zoom.
-- **Fullscreen**:
-    - `F`: Toggle full-screen mode.
+    - `D`: zoom in (narrow the FOV)
+     - `S`: zoom out (widen the FOV)
+     - **Trackpad / wheel**: pinch or scroll to zoom, between 30° and 120°.
+- **Reset (`R`)**: eased return to the nominal view (λ = 0°, β = 0°, FOV = 78°).
+- **Fullscreen (`F`)**: toggle full-screen mode.
 
 ### Views & Overlays
 
-- **View Cycle (`P`)**: Cycles through the three shells:
-    1. **Géode** — the icosahedral triangulation wireframe (ν = 10).
-    2. **Cassini** — NASA/JPL enhanced-color global view (`PIA07782.jpg`).
-    3. **Cassini–Juno mix** — the equirectangular texture map by floppastrogeo.
-- **Navigation Data (`V`)**: Toggles the scientific overlay:
-    - **Coordinate grid**: latitude/longitude lines every 15°, labeled in Computer Modern.
-    - **Speed Arrow**: A large vector indicator showing the current rotational velocity and direction, with a live `ω` readout in rad/s.
-    - **SUN Marker**: A fixed reference point on the horizon to help maintain orientation.
-- **Full Zen Mode (`Z`)**: Hides all UI elements, including coordinates, labels, and the cursor, leaving only the planetary vista for a pure, meditative experience.
+- **View Cycle (`P`)** — `Shift+P` steps backwards. The shells are:
+     1. **Cassini–Juno mix** *(the default view on load)* — the equirectangular texture map by
+      floppastrogeo (`jupiter_texture_map_of_cassini_and_juno_mixed_by_floppastrogeo_dgjn416.jpg`).
+     2. **Cassini** — NASA/JPL enhanced-color cylindrical map (`PIA07782.jpg`).
+     3. **Géode** — the sun-lit icosahedral triangulation, ν = 10, 2,000 facets.
+  Each view gets its own mesh (never a shared material), so a map can never be "skipped" when
+  cycling, and the interface recolours itself: matrix green over the geodesic, **dark blue**
+  ink on a pale plate over Jupiter's images.
+- **Navigation Data (`V`)** — the scientific overlay:
+     - **Velocity vector**: an instrument-sized arrow drawn from the reticle along the
+      instantaneous line of sight, with `|ω|` in °/s on the shaft and the `λ̇ / β̇` components
+      beside the tip.
+     - **Telemetry plate**: azimuth λ, elevation β, |ω|, FOV, the SUN coordinates and the
+      bearing of the SUN from the current line of sight.
+- **Coordinate Grid (`G`)**: latitude and longitude only, drawn every 15° with the values
+  printed every 15° (*15°N*, *30°S*, *045°E*, …) in Computer Modern / Latin Modern at the size
+  of a map annotation. The equator and the prime meridian are emphasised.
+- **Find the SUN (`T`)**: slew onto the virtual SUN marker. The SUN is a cardinal reference
+  fixed at λ = +34°, β = +24°; when it leaves the frame an edge chevron points to it and the
+  telemetry plate gives its bearing.
+- **Full Zen Mode (`Z`)**: hides every UI element — plates, grid, labels, SUN, vector, cursor —
+  leaving only the planetary vista.
 
 ## 🚀 Local Setup
 
@@ -78,11 +98,43 @@ To run this project locally:
 
 The planetary surface textures used in this project are sourced from:
 
-- **[Juno Mission Media Gallery](https://www.missionjuno.swri.edu/mediagallery)** (provided by [SWRI](https://www.swri.org/)).
-- **[PIA07782 — Jupiter, Global View, Enhanced Color](https://photojournal.jpl.nasa.gov/catalog/PIA07782)** (Cassini imaging, NASA/JPL; also on [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:PIA07782major.jpg)).
-- **[floppastrogeo](https://www.deviantart.com/floppastrogeo)** — [*Jupiter texture map of Cassini and Juno mixed*](https://www.deviantart.com/floppastrogeo/gallery) (mixed Cassini/Juno equirectangular map via DeviantArt).
+- **[Juno Mission Media Gallery](https://www.missionjuno.swri.edu/media-gallery/junocam)**
+   (provided by [SWRI](https://www.swri.org/)), and in particular the
+   **[JunoCam Maps Archive](https://www.missionjuno.swri.edu/junocam/think-tank/maps-archive)**
+   — global cylindrical (equirectangular) maps at 10 px/degree with System III longitudes,
+  made by Gerald Eichstädt and John Rogers from NASA / JPL / SwRI / MSSS imagery.
+- **[PIA07782 — Jupiter, Cylindrical Map (December 2000)](https://photojournal.jpl.nasa.gov/catalog/PIA07782)**,
+  Cassini's best map of Jupiter in enhanced colour, from the
+  [NASA JPL Photojournal](https://photojournal.jpl.nasa.gov/); the file ships here as
+   `PIA07782.jpg` (also on [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Jupiter_Cylindrical_Map_-_Dec_2000_PIA07782.jpg)).
+- **[Floppastrogeo](https://www.deviantart.com/floppastrogeo)** —
+   [*Jupiter texture map of Cassini and Juno mixed*](https://www.deviantart.com/floppastrogeo/gallery)
+   (Cassini mid-latitudes blended with the Juno polar cyclones), the equirectangular map
+   `jupiter_texture_map_of_cassini_and_juno_mixed_by_floppastrogeo_dgjn416.jpg` and the default
+  view of this project.
 
 ### Licensing
 
 - **Code**: This project is released under the **[MIT License](LICENSE)**.
-- **Imagery**: Imagery is used under **Fair Use** for educational and non-commercial visualization purposes. All rights to the original textures belong to their respective creators and agencies (NASA / SWRI / floppastrogeo).
+- **Imagery**: Imagery is used under **Fair Use** for educational and non-commercial
+  visualization purposes. All rights to the original textures belong to their respective
+  creators and agencies (NASA / JPL / Caltech / SWRI / MSSS / Floppastrogeo).
+    - NASA/JPL products such as PIA07782 are **public domain** (not subject to copyright);
+      please keep the credit line *NASA / JPL / Caltech*.
+    - The JunoCam maps of the Maps Archive are released **CC-BY** by their authors — credit
+      *NASA / JPL / SwRI / MSSS / Gerald Eichstädt / John Rogers*.
+    - Community texture maps on DeviantArt (Floppastrogeo, FarGetaNik, Askaniy, …) are usually
+      published under **CC-BY-NC-SA**: keep the attribution, do not use them commercially, and
+      share derivatives under the same licence.
+    - The **geodesic tessellation and the graticule are generated in code**, so the frequency-ν
+      view has no third-party imagery at all.
+- **Fonts**: annotations are set in **Latin Modern Roman** (the TeX Gyda successor to Computer
+  Modern), distributed under the [GUST Font License](https://www.ctan.org/tex-archive/fonts/lm/doc/fonts/lm/README)
+  via [CTAN](https://www.ctan.org/pkg/lm), and loaded from
+  [jsDelivr](https://cdn.jsdelivr.net/gh/geometalab/Latin-Modern-Math-font@master/fonts/otf/lmroman10-regular.otf)
+  with a [cdnFonts](https://www.cdnfonts.com/latin-modern-10.font) fallback; the interface uses
+  [Inter](https://rsms.me/inter/).
+- **Library**: [three.js](https://threejs.org/) (MIT).
+
+> Not redistributing the imagery: only the two maps needed by the visualization are kept in the
+> repository, together with their provenance. See [LICENSE](LICENSE) for the code licence.
