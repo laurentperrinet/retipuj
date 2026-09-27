@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inside Jupiter</title>
-    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600&family=Inter:wght@300;400&display=swap" rel="stylesheet">
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; transition: cursor 0.3s ease; }
         canvas { display: block; }
@@ -12,16 +11,40 @@
             position: absolute;
             top: 30px;
             left: 30px;
-            color: #004a8d; /* Darker Video Blue */
-            font-family: 'Inter', sans-serif;
+            color: #00ffaa;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             pointer-events: none;
-            text-shadow: 0 0 15px rgba(0, 74, 141, 0.4);
+            text-shadow: 0 0 15px rgba(0,255,170,0.4);
             user-select: none;
             z-index: 10;
             transition: opacity 0.5s ease;
         }
         h1 { margin: 0; font-weight: 300; font-size: 24px; letter-spacing: 4px; text-transform: uppercase; }
-        p { opacity: 0.8; font-size: 14px; margin-top: 8px; font-weight: 300; line-height: 1.6; }
+        p { opacity: 0.7; font-size: 14px; margin-top: 8px; font-weight: 300; line-height: 1.6; }
+        
+        #footer {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            color: #00ffaa;
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+            font-weight: 300;
+            letter-spacing: 1px;
+            opacity: 0.5;
+            transition: opacity 0.5s ease;
+            z-index: 10;
+        }
+        #footer a {
+            color: #00ffaa;
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.3s ease;
+        }
+        #footer a:hover {
+            border-bottom-color: #00ffaa;
+        }
         
         #status-overlay {
             position: absolute;
@@ -41,7 +64,7 @@
             left: 50%;
             width: 6px;
             height: 6px;
-            background: #004a8d;
+            background: #00ffaa;
             border-radius: 50%;
             transform: translate(-50%, -50%);
         }
@@ -51,7 +74,7 @@
             left: 50%;
             width: 2px;
             height: 0px;
-            background: linear-gradient(to top, transparent, #004a8d);
+            background: linear-gradient(to top, transparent, #00ffaa);
             transform-origin: bottom center;
             transform: translate(-50%, -100%);
             transition: height 0.1s ease-out;
@@ -73,7 +96,7 @@
             left: 50%;
             width: 4px;
             height: 4px;
-            background: rgba(0, 74, 141, 0.3);
+            background: rgba(0, 255, 170, 0.3);
             border-radius: 50%;
             transform: translate(-50%, -50%);
             pointer-events: none;
@@ -91,12 +114,16 @@
 </head>
 <body id="body">
     <div id="ui">
-        <h1>Jupiter from Inside</h1>
+        <h1>Retipuj: Jupiter from the Inside</h1>
         <p>
-            Mouse distance from center controls rotation speed<br>
-            View: 'P' (Texture/Icosahedron) • Coordinates: 'C' • Zoom: 'S' / 'D' • Motion: 'J' 'K' 'L' 'M'<br>
-            Data: 'V' • Zen Mode: 'H'
+            Saccade-safe mouse navigation • Drift converges to Jupiter's rotation<br>
+            Zoom: 'S' (In) / 'D' (Out) • Motion: H J K L (Vim) • Fullscreen: 'F'<br>
+            Data: 'V' • Zen Mode: 'Z'
         </p>
+    </div>
+
+    <div id="footer">
+        © Licensed by <a href="https://laurentperrinet.github.io" target="_blank">laurentperrinet.github.io</a>
     </div>
 
     <div id="center-dot"></div>
@@ -120,12 +147,17 @@
         import * as THREE from 'three';
 
         // --- Configuration ---
-        const VELOCITY_SENSITIVITY = 0.006; 
-        const KEY_SENSITIVITY = 0.002;     
-        const FRICTION = 0.98; 
+        const MOUSE_SENSITIVITY = 0.002; 
+        const KEY_SENSITIVITY = 0.0005;   
         const ZOOM_SENSITIVITY = 0.05;
         const SPHERE_RADIUS = 100;
-        const UI_COLOR = 0x004a8d;
+        const MAX_VELOCITY = 2.0 * Math.PI; // Hard cap: 1 rotation per second
+
+        // Ornstein-Uhlenbeck & Planetary Physics
+        const JUPITER_ROT_VEL = 0.000176; // Planetary spin mean (rad/s)
+        const OU_THETA = 0.92; // Low damping / Mean reversion rate
+        const OU_SIGMA = 0.00005; // Organic volatility
+        const ANCHOR_FOLLOW_RATE = 0.08; // Saccade-safe anchor speed
 
         // --- Scene Setup ---
         const scene = new THREE.Scene();
@@ -136,92 +168,17 @@
         renderer.setPixelRatio(window.devicePixelRatio);
         document.body.appendChild(renderer.domElement);
 
-        // --- Materials ---
-        const textureLoader = new THREE.TextureLoader();
-        const jupiterTexture = textureLoader.load('PIA07782.jpg');
-
-        const wireframeMaterial = new THREE.MeshBasicMaterial({ 
-            color: UI_COLOR, 
+        // --- The Interior Sphere ---
+        const geometry = new THREE.SphereGeometry(SPHERE_RADIUS, 64, 64);
+        const material = new THREE.MeshBasicMaterial({ 
+            color: 0x00ffaa, 
             wireframe: true,
             side: THREE.BackSide 
         });
-
-        const textureMaterial = new THREE.MeshBasicMaterial({ 
-            map: jupiterTexture,
-            side: THREE.BackSide 
-        });
-
-        // --- The Interior Sphere (Main Surface) ---
-        // Icosahedron provides a much more regular tessellation than UV Sphere
-        const surfaceGeometry = new THREE.SphereGeometry(SPHERE_RADIUS, 64, 64);
-        const sphere = new THREE.Mesh(surfaceGeometry, textureMaterial);
+        const sphere = new THREE.Mesh(geometry, material);
         scene.add(sphere);
 
-        // Structural view: Icosahedron
-        const icoGeometry = new THREE.IcosahedronGeometry(SPHERE_RADIUS, 4);
-        const icoMesh = new THREE.Mesh(icoGeometry, wireframeMaterial);
-        icoMesh.visible = false;
-        scene.add(icoMesh);
-
-        // --- Coordinate Labels ---
-        const labelGroup = new THREE.Group();
-        labelGroup.visible = false;
-        scene.add(labelGroup);
-
-        function createLabel(text, lat, lon) {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = 128;
-            canvas.height = 64;
-            
-            ctx.fillStyle = 'rgba(0,0,0,0)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            ctx.font = '32px "Crimson Pro", "Times New Roman", serif';
-            ctx.fillStyle = 'rgba(0, 74, 141, 0.8)';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(text, 64, 32);
-            
-            const texture = new THREE.CanvasTexture(canvas);
-            const spriteMaterial = new THREE.SpriteMaterial({ map: texture, transparent: true });
-            const sprite = new THREE.Sprite(spriteMaterial);
-            
-            // Spherical to Cartesian
-            const phi = (90 - lat) * (Math.PI / 180);
-            const theta = (lon + 180) * (Math.PI / 180);
-            
-            sprite.position.set(
-                SPHERE_RADIUS * 1.02 * Math.sin(phi) * Math.cos(theta),
-                SPHERE_RADIUS * 1.02 * Math.cos(phi),
-                SPHERE_RADIUS * 1.02 * Math.sin(phi) * Math.sin(theta)
-            );
-            sprite.scale.set(10, 5, 1);
-            return sprite;
-        }
-
-        // Generate markers every 15 degrees
-        for (let lat = -90; lat <= 90; lat += 15) {
-            for (let lon = 0; lon < 360; lon += 15) {
-                if (Math.abs(lat) === 90) {
-                    // Only one label for poles
-                    if (lon === 0) {
-                        labelGroup.add(createLabel(lat === 90 ? '90°N' : '90°S', lat, 0));
-                    }
-                } else {
-                    // Only show lat labels on the prime meridian and lon labels on equator to avoid clutter, 
-                    // or show all but in smaller steps. Let's show a clean grid.
-                    if (lat === 0) {
-                        labelGroup.add(createLabel(lon + '°', 0, lon));
-                    }
-                    if (lon === 0) {
-                        labelGroup.add(createLabel(lat + '°', lat, 0));
-                    }
-                }
-            }
-        }
-
-        // --- The SUN (Reference Point) ---
+        // --- The SUN Reference ---
         const sunGeo = new THREE.SphereGeometry(0.8, 16, 16);
         const sunMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
         const sunMesh = new THREE.Mesh(sunGeo, sunMat);
@@ -233,12 +190,12 @@
         // --- State ---
         let mouseX = 0; 
         let mouseY = 0; 
+        let anchorX = 0; 
+        let anchorY = 0;
         let rotVelX = 0;
         let rotVelY = 0;
         let showStatus = false;
         let zenMode = false;
-        let isWireframe = false; 
-        let showCoords = false;
 
         // --- Interaction ---
         window.addEventListener('mousemove', (event) => {
@@ -249,20 +206,6 @@
         window.addEventListener('keydown', (event) => {
             const key = event.key.toLowerCase();
             
-            // View Toggle (P)
-            if (key === 'p') {
-                isWireframe = !isWireframe;
-                sphere.visible = !isWireframe;
-                icoMesh.visible = isWireframe;
-            }
-
-            // Coords Toggle (C)
-            if (key === 'c') {
-                showCoords = !showCoords;
-                labelGroup.visible = showCoords;
-            }
-
-            // Zoom
             if (key === 's') {
                 camera.fov -= 2;
                 camera.fov = Math.max(30, Math.min(120, camera.fov));
@@ -274,13 +217,23 @@
                 camera.updateProjectionMatrix();
             }
 
-            // Motion (JKL M)
-            if (key === 'j') rotVelY += KEY_SENSITIVITY; 
+            // Vim Motion
+            if (key === 'h') rotVelY += KEY_SENSITIVITY; 
             if (key === 'l') rotVelY -= KEY_SENSITIVITY; 
             if (key === 'k') rotVelX -= KEY_SENSITIVITY; 
-            if (key === 'm') rotVelX += KEY_SENSITIVITY; 
+            if (key === 'j') rotVelX += KEY_SENSITIVITY; 
 
-            // Status
+            // Fullscreen (F)
+            if (key === 'f') {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(err => {
+                        console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+                    });
+                } else {
+                    document.exitFullscreen();
+                }
+            }
+
             if (key === 'v') {
                 if (zenMode) return;
                 showStatus = !showStatus;
@@ -288,11 +241,11 @@
                 document.getElementById('sun-marker').style.display = showStatus ? 'block' : 'none';
             }
             
-            // Zen Mode
-            if (key === 'h') {
+            if (key === 'z') {
                 zenMode = !zenMode;
                 const body = document.getElementById('body');
                 const ui = document.getElementById('ui');
+                const footer = document.getElementById('footer');
                 const status = document.getElementById('status-overlay');
                 const sun = document.getElementById('sun-marker');
                 const dot = document.getElementById('center-dot');
@@ -300,6 +253,7 @@
                 if (zenMode) {
                     body.classList.add('zen-mode');
                     ui.classList.add('hidden');
+                    footer.classList.add('hidden');
                     status.style.display = 'none';
                     sun.style.display = 'none';
                     dot.style.opacity = '0';
@@ -307,6 +261,7 @@
                 } else {
                     body.classList.remove('zen-mode');
                     ui.classList.remove('hidden');
+                    footer.classList.remove('hidden');
                     dot.style.opacity = '1';
                 }
             }
@@ -352,12 +307,30 @@
 
         function animate() {
             requestAnimationFrame(animate);
-            rotVelY -= mouseX * VELOCITY_SENSITIVITY;
-            rotVelX += mouseY * VELOCITY_SENSITIVITY;
-            rotVelX *= FRICTION;
-            rotVelY *= FRICTION;
+
+            // 1. Saccade-Safe Anchor update
+            anchorX += (mouseX - anchorX) * ANCHOR_FOLLOW_RATE;
+            anchorY += (mouseY - anchorY) * ANCHOR_FOLLOW_RATE;
+
+            // 2. Acceleration relative to anchor
+            const accelY = (mouseX - anchorX) * -MOUSE_SENSITIVITY; 
+            const accelX = (mouseY - anchorY) * MOUSE_SENSITIVITY;  
+
+            // 3. Ornstein-Uhlenbeck Diffusion
+            // Convergence to Jupiter's spin on Y, and 0 on X
+            rotVelY = rotVelY + OU_THETA * (JUPITER_ROT_VEL - rotVelY) * 0.016 + (Math.random() - 0.5) * OU_SIGMA;
+            rotVelX = rotVelX + OU_THETA * (0 - rotVelX) * 0.016 + (Math.random() - 0.5) * OU_SIGMA;
+
+            rotVelY += accelY;
+            rotVelX += accelX;
+
+            // 4. Hard Velocity Cap (Max 1 rotation/sec)
+            rotVelX = Math.max(-MAX_VELOCITY, Math.min(MAX_VELOCITY, rotVelX));
+            rotVelY = Math.max(-MAX_VELOCITY, Math.min(MAX_VELOCITY, rotVelY));
+
             camera.rotation.y += rotVelY;
             camera.rotation.x += rotVelX;
+
             updateStatusUI();
             renderer.render(scene, camera);
         }
