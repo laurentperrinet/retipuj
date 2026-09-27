@@ -116,7 +116,7 @@
     <div id="ui">
         <h1>Jupiter Interior</h1>
         <p>
-            Saccade-safe mouse navigation • Drift powered by OU-diffusion<br>
+            Saccade-safe mouse navigation • Drift converges to Jupiter's rotation<br>
             Zoom: 'S' (In) / 'D' (Out) • Motion: H J K L (Vim)<br>
             Data: 'V' • Zen Mode: 'Z'
         </p>
@@ -147,14 +147,18 @@
         import * as THREE from 'three';
 
         // --- Configuration ---
-        const MOUSE_SENSITIVITY = 0.008; 
-        const KEY_SENSITIVITY = 0.002;     
+        const MOUSE_SENSITIVITY = 0.003; // Reduced for slower amplitude
+        const KEY_SENSITIVITY = 0.001;   // Reduced for smoother key movement
         const ZOOM_SENSITIVITY = 0.05;
         const SPHERE_RADIUS = 100;
+        const MAX_ROT_VEL = 2.0;        // Soft cap to prevent too fast turning
 
-        // Ornstein-Uhlenbeck Parameters
-        const OU_THETA = 0.98; 
-        const OU_SIGMA = 0.0001; 
+        // Ornstein-Uhlenbeck & Planetary Physics
+        // Jupiter's rotation period is ~9.9 hours. 
+        // Angular velocity w = 2*PI / (9.9 * 3600) approx 0.000176 rad/s
+        const JUPITER_ROT_VEL = 0.000176; 
+        const OU_THETA = 0.95; 
+        const OU_SIGMA = 0.00005; 
         const ANCHOR_FOLLOW_RATE = 0.1; 
 
         // --- Scene Setup ---
@@ -300,11 +304,17 @@
             const accelY = (mouseX - anchorX) * -MOUSE_SENSITIVITY; 
             const accelX = (mouseY - anchorY) * MOUSE_SENSITIVITY;  
 
-            rotVelY = rotVelY + OU_THETA * (0 - rotVelY) * 0.016 + (Math.random() - 0.5) * OU_SIGMA;
+            // OU-Diffusion convergence to Jupiter's self-rotation (rotVelY)
+            // and convergence to 0 for vertical axis (rotVelX)
+            rotVelY = rotVelY + OU_THETA * (JUPITER_ROT_VEL - rotVelY) * 0.016 + (Math.random() - 0.5) * OU_SIGMA;
             rotVelX = rotVelX + OU_THETA * (0 - rotVelX) * 0.016 + (Math.random() - 0.5) * OU_SIGMA;
 
             rotVelY += accelY;
             rotVelX += accelX;
+
+            // Amplitude clamping to prevent excessive speed
+            rotVelX = Math.max(-MAX_ROT_VEL, Math.min(MAX_ROT_VEL, rotVelX));
+            rotVelY = Math.max(-MAX_ROT_VEL, Math.min(MAX_ROT_VEL, rotVelY));
 
             camera.rotation.y += rotVelY;
             camera.rotation.x += rotVelX;

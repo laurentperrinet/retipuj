@@ -8,8 +8,8 @@ Instead of looking at the planet from space, this project places you at the cent
 ## 🕹️ Controls
 
 - **Navigation**: Move your mouse away from the center of the screen to accelerate rotation. The further the cursor is from the center, the faster you rotate.
-- **View Mode**: Press **'P'** to toggle between the high-resolution planetary surface and the structural wireframe.
-- **Coordinate Grid**: Press **'C'** to toggle the latitude and longitude grid overlay.
+- **View Mode**: Press **'P'** to toggle between the planetary surface texture and the structural Icosahedral tessellation.
+- **Coordinates**: Press **'C'** to toggle the latitude and longitude markers (every 15°).
 - **Drift**: The movement is designed to be smooth and drifting, encouraging a slow, meditative exploration of the interior.
 - **Zoom**: Use your trackpad (pinch) or mouse wheel to zoom in and out (adjusts Field of View).
 - **Navigation Data**: Press the **'V'** key to toggle the status overlay:
