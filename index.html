@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inside Jupiter</title>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #000; }
+        body { margin: 0; overflow: hidden; background-color: #000; transition: cursor 0.3s ease; }
         canvas { display: block; }
         #ui {
             position: absolute;
@@ -17,6 +17,7 @@
             text-shadow: 0 0 15px rgba(0,255,170,0.4);
             user-select: none;
             z-index: 10;
+            transition: opacity 0.5s ease;
         }
         h1 { margin: 0; font-weight: 300; font-size: 24px; letter-spacing: 4px; text-transform: uppercase; }
         p { opacity: 0.7; font-size: 14px; margin-top: 8px; font-weight: 300; line-height: 1.6; }
@@ -31,6 +32,7 @@
             pointer-events: none;
             display: none;
             z-index: 5;
+            transition: opacity 0.5s ease;
         }
         #speed-arrow {
             position: absolute;
@@ -64,16 +66,39 @@
             transform: translate(-50%, -50%);
             display: none;
         }
+        #center-dot {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 4px;
+            height: 4px;
+            background: rgba(0, 255, 170, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 5;
+            transition: opacity 0.3s ease;
+        }
+        .zen-mode {
+            cursor: none !important;
+        }
+        .hidden {
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
     </style>
 </head>
-<body>
+<body id="body">
     <div id="ui">
         <h1>Jupiter Interior</h1>
         <p>
             Mouse distance from center controls rotation speed<br>
-            Scroll/Pinch to zoom • Press 'S' for navigation data
+            View: 'P' (Texture/Grid) • Zoom: 'S' / 'D' • Motion: 'J' 'K' 'L' 'M'<br>
+            Data: 'V' • Zen Mode: 'H'
         </p>
     </div>
+
+    <div id="center-dot"></div>
 
     <div id="status-overlay">
         <div id="speed-arrow">
@@ -94,8 +119,9 @@
         import * as THREE from 'three';
 
         // --- Configuration ---
-        const VELOCITY_SENSITIVITY = 0.012; 
-        const FRICTION = 0.985; 
+        const VELOCITY_SENSITIVITY = 0.006; 
+        const KEY_SENSITIVITY = 0.002;     
+        const FRICTION = 0.98; 
         const ZOOM_SENSITIVITY = 0.05;
         const SPHERE_RADIUS = 100;
 
@@ -108,14 +134,24 @@
         renderer.setPixelRatio(window.devicePixelRatio);
         document.body.appendChild(renderer.domElement);
 
-        // --- The Interior Sphere ---
-        const geometry = new THREE.SphereGeometry(SPHERE_RADIUS, 64, 64);
-        const material = new THREE.MeshBasicMaterial({ 
+        // --- Materials ---
+        const textureLoader = new THREE.TextureLoader();
+        const jupiterTexture = textureLoader.load('PIA07782.jpg');
+
+        const wireframeMaterial = new THREE.MeshBasicMaterial({ 
             color: 0x00ffaa, 
             wireframe: true,
             side: THREE.BackSide 
         });
-        const sphere = new THREE.Mesh(geometry, material);
+
+        const textureMaterial = new THREE.MeshBasicMaterial({ 
+            map: jupiterTexture,
+            side: THREE.BackSide 
+        });
+
+        // --- The Interior Sphere ---
+        const geometry = new THREE.SphereGeometry(SPHERE_RADIUS, 64, 64);
+        const sphere = new THREE.Mesh(geometry, wireframeMaterial);
         scene.add(sphere);
 
         // --- The SUN (Reference Point) ---
@@ -133,6 +169,8 @@
         let rotVelX = 0;
         let rotVelY = 0;
         let showStatus = false;
+        let zenMode = false;
+        let isWireframe = true;
 
         // --- Interaction ---
         window.addEventListener('mousemove', (event) => {
@@ -141,10 +179,61 @@
         });
 
         window.addEventListener('keydown', (event) => {
-            if (event.key.toLowerCase() === 's') {
+            const key = event.key.toLowerCase();
+            
+            // View Toggle
+            if (key === 'p') {
+                isWireframe = !isWireframe;
+                sphere.material = isWireframe ? wireframeMaterial : textureMaterial;
+            }
+
+            // Zoom
+            if (key === 's') {
+                camera.fov -= 2;
+                camera.fov = Math.max(30, Math.min(120, camera.fov));
+                camera.updateProjectionMatrix();
+            }
+            if (key === 'd') {
+                camera.fov += 2;
+                camera.fov = Math.max(30, Math.min(120, camera.fov));
+                camera.updateProjectionMatrix();
+            }
+
+            // Motion (JKL M)
+            if (key === 'j') rotVelY += KEY_SENSITIVITY; // Left
+            if (key === 'l') rotVelY -= KEY_SENSITIVITY; // Right
+            if (key === 'k') rotVelX -= KEY_SENSITIVITY; // Up
+            if (key === 'm') rotVelX += KEY_SENSITIVITY; // Down
+
+            // Status
+            if (key === 'v') {
+                if (zenMode) return;
                 showStatus = !showStatus;
                 document.getElementById('status-overlay').style.display = showStatus ? 'block' : 'none';
                 document.getElementById('sun-marker').style.display = showStatus ? 'block' : 'none';
+            }
+            
+            // Zen Mode
+            if (key === 'h') {
+                zenMode = !zenMode;
+                const body = document.getElementById('body');
+                const ui = document.getElementById('ui');
+                const status = document.getElementById('status-overlay');
+                const sun = document.getElementById('sun-marker');
+                const dot = document.getElementById('center-dot');
+                
+                if (zenMode) {
+                    body.classList.add('zen-mode');
+                    ui.classList.add('hidden');
+                    status.style.display = 'none';
+                    sun.style.display = 'none';
+                    dot.style.opacity = '0';
+                    showStatus = false;
+                } else {
+                    body.classList.remove('zen-mode');
+                    ui.classList.remove('hidden');
+                    dot.style.opacity = '1';
+                }
             }
         });
 
@@ -165,22 +254,19 @@
         const sunMarker = document.getElementById('sun-marker');
 
         function updateStatusUI() {
-            if (!showStatus) return;
+            if (!showStatus || zenMode) return;
             
-            // Speed arrow
             const speed = Math.sqrt(rotVelX*rotVelX + rotVelY*rotVelY);
             const length = Math.min(150, speed * 1500);
             arrowLine.style.height = `${length}px`;
             
             const visualAngle = Math.atan2(mouseY, mouseX) * (180 / Math.PI);
-            arrowLine.style.transform = `translate(-50%, -100%) rotate(${visualAngle + 180}deg)`;
+            arrowLine.style.transform = `translate(-50%, -100%) rotate(${visualAngle + 90}deg)`;
 
-            // SUN label projection
             const vector = sunMesh.position.clone().project(camera);
             const x = (vector.x * 0.5 + 0.5) * window.innerWidth;
             const y = (vector.y * -0.5 + 0.5) * window.innerHeight;
             
-            // Only show label if it's in front of the camera
             if (vector.z < 1) {
                 sunMarker.style.left = `${x}px`;
                 sunMarker.style.top = `${y}px`;
@@ -194,15 +280,12 @@
         function animate() {
             requestAnimationFrame(animate);
 
-            // Acceleration based on eccentricity
-            rotVelY += mouseX * VELOCITY_SENSITIVITY;
+            rotVelY -= mouseX * VELOCITY_SENSITIVITY;
             rotVelX += mouseY * VELOCITY_SENSITIVITY;
 
-            // Friction for drift
             rotVelX *= FRICTION;
             rotVelY *= FRICTION;
 
-            // Apply to camera rotation
             camera.rotation.y += rotVelY;
             camera.rotation.x += rotVelX;
 
