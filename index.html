@@ -3,134 +3,196 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inside Jupiter</title>
+    <title>Jupiter from the Inside</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400&display=swap" rel="stylesheet">
     <style>
-        body { margin: 0; overflow: hidden; background-color: #000; transition: cursor 0.3s ease; }
+        /* "Computer Modern" (Latin Modern Roman) for scientific labels */
+        @font-face {
+            font-family: 'Computer Modern';
+            font-style: normal;
+            font-weight: 400;
+            src: url('https://fonts.cdnfonts.com/s/266/lmroman10-regular.woff') format('woff');
+        }
+        @font-face {
+            font-family: 'Computer Modern';
+            font-style: normal;
+            font-weight: 700;
+            src: url('https://fonts.cdnfonts.com/s/266/lmroman10-bold.woff') format('woff');
+        }
+        @font-face {
+            font-family: 'Computer Modern';
+            font-style: italic;
+            font-weight: 400;
+            src: url('https://fonts.cdnfonts.com/s/266/lmromanslant10-regular.woff') format('woff');
+        }
+
+        :root { color-scheme: dark; }
+        body { margin: 0; overflow: hidden; background-color: #000; }
         canvas { display: block; }
+
+        /* --- Theme: "Digital Observatory" ---
+           Green HUD over the geodesic wireframe,
+           deep Video Blue when Jupiter's images are shown. */
+        body { --accent: #00ffaa; --accent-glow: rgba(0,255,170,0.4); }
+        body.theme-texture { --accent: #1e63c8; --accent-glow: rgba(30,99,200,0.55); }
+        body.theme-texture #ui { text-shadow: 0 0 15px var(--accent-glow), 0 0 3px rgba(0,0,0,0.6); }
+
         #ui {
             position: absolute;
             top: 30px;
             left: 30px;
-            color: #00ffaa;
+            color: var(--accent);
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             pointer-events: none;
-            text-shadow: 0 0 15px rgba(0,255,170,0.4);
+            text-shadow: 0 0 15px var(--accent-glow);
             user-select: none;
             z-index: 10;
-            transition: opacity 0.5s ease;
+            transition: color 0.6s ease, text-shadow 0.6s ease, opacity 0.5s ease;
         }
         h1 { margin: 0; font-weight: 300; font-size: 24px; letter-spacing: 4px; text-transform: uppercase; }
         p { opacity: 0.7; font-size: 14px; margin-top: 8px; font-weight: 300; line-height: 1.6; }
-        
+        #mode-label {
+            font-family: 'Computer Modern', 'Latin Modern Roman', Georgia, 'Times New Roman', serif;
+            font-size: 15px;
+            margin-top: 10px;
+            opacity: 0.9;
+        }
+
         #footer {
             position: absolute;
             bottom: 20px;
             width: 100%;
             text-align: center;
-            color: #00ffaa;
+            color: var(--accent);
             font-family: 'Inter', sans-serif;
             font-size: 12px;
             font-weight: 300;
             letter-spacing: 1px;
             opacity: 0.5;
-            transition: opacity 0.5s ease;
+            transition: color 0.6s ease, opacity 0.5s ease;
             z-index: 10;
+            pointer-events: none;
         }
         #footer a {
-            color: #00ffaa;
+            color: var(--accent);
             text-decoration: none;
             border-bottom: 1px solid transparent;
             transition: border-color 0.3s ease;
+            pointer-events: auto;
         }
-        #footer a:hover {
-            border-bottom-color: #00ffaa;
-        }
-        
+        #footer a:hover { border-bottom-color: var(--accent); }
+
+        /* --- V mode: velocity vector + SUN reference --- */
         #status-overlay {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 300px;
-            height: 300px;
+            width: 900px;
+            height: 900px;
             pointer-events: none;
             display: none;
             z-index: 5;
-            transition: opacity 0.5s ease;
         }
         #speed-arrow {
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 6px;
-            height: 6px;
-            background: #00ffaa;
+            width: 12px;
+            height: 12px;
+            background: var(--accent);
             border-radius: 50%;
             transform: translate(-50%, -50%);
+            box-shadow: 0 0 12px var(--accent-glow);
         }
         #arrow-line {
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 2px;
+            width: 4px;
             height: 0px;
-            background: linear-gradient(to top, transparent, #00ffaa);
+            background: linear-gradient(to top, transparent, var(--accent));
             transform-origin: bottom center;
             transform: translate(-50%, -100%);
             transition: height 0.1s ease-out;
         }
+        #arrow-head {
+            position: absolute;
+            top: -4px;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-left: 9px solid transparent;
+            border-right: 9px solid transparent;
+            border-bottom: 16px solid var(--accent);
+            transform: translate(-50%, 0);
+            filter: drop-shadow(0 0 6px var(--accent-glow));
+        }
+        #speed-readout {
+            position: absolute;
+            left: 22px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--accent);
+            font-family: 'Computer Modern', Georgia, serif;
+            font-style: italic;
+            font-size: 18px;
+            text-shadow: 0 0 8px var(--accent-glow);
+            white-space: nowrap;
+        }
         #sun-marker {
             position: absolute;
             color: #ffff00;
-            font-family: monospace;
-            font-size: 12px;
+            font-family: 'Computer Modern', Georgia, serif;
+            font-size: 18px;
             font-weight: bold;
+            letter-spacing: 2px;
             pointer-events: none;
-            text-shadow: 0 0 5px #ffff00;
-            transform: translate(-50%, -50%);
+            text-shadow: 0 0 6px #ffff00, 0 0 2px #000;
+            transform: translate(-50%, -160%);
             display: none;
+            z-index: 6;
         }
         #center-dot {
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 4px;
-            height: 4px;
-            background: rgba(0, 255, 170, 0.3);
+            width: 5px;
+            height: 5px;
+            background: var(--accent);
+            opacity: 0.35;
             border-radius: 50%;
             transform: translate(-50%, -50%);
             pointer-events: none;
             z-index: 5;
             transition: opacity 0.3s ease;
         }
-        .zen-mode {
-            cursor: none !important;
-        }
-        .hidden {
-            opacity: 0 !important;
-            pointer-events: none !important;
-        }
+        .zen-mode { cursor: none !important; }
+        .hidden { opacity: 0 !important; pointer-events: none !important; }
     </style>
 </head>
 <body id="body">
     <div id="ui">
-        <h1>Retipuj: Jupiter from the Inside</h1>
+        <h1>Jupiter from the Inside</h1>
         <p>
-            Saccade-safe mouse navigation • Drift converges to Jupiter's rotation<br>
-            Zoom: 'S' (In) / 'D' (Out) • Motion: H J K L (Vim) • Fullscreen: 'F'<br>
-            Data: 'V' • Zen Mode: 'Z'
+            Saccade-safe mouse navigation &bull; Drift converges to Jupiter's rotation<br>
+            Zoom: 'S' (In) / 'D' (Out) &bull; Motion: H J K L (Vim) &bull; Fullscreen: 'F'<br>
+            Views: 'P' (G&eacute;ode / Cassini / Cassini&ndash;Juno mix) &bull; Data: 'V' &bull; Zen Mode: 'Z'
         </p>
+        <div id="mode-label">Géode par triangulation — icosaèdre, arêtes divisées en 10 (ν = 10)</div>
     </div>
 
     <div id="footer">
-        © Licensed by <a href="https://laurentperrinet.github.io" target="_blank">laurentperrinet.github.io</a>
+        &copy; <a href="https://laurentperrinet.github.io" target="_blank">laurentperrinet</a> &bull;
+        <a href="LICENSE" target="_blank">MIT License</a> &bull; imagery &copy; NASA / SWRI / floppastrogeo
     </div>
 
     <div id="center-dot"></div>
 
     <div id="status-overlay">
         <div id="speed-arrow">
-            <div id="arrow-line"></div>
+            <div id="arrow-line"><div id="arrow-head"></div></div>
+            <div id="speed-readout">ω = 0.000 rad/s</div>
         </div>
     </div>
     <div id="sun-marker">SUN</div>
@@ -147,55 +209,231 @@
         import * as THREE from 'three';
 
         // --- Configuration ---
-        const MOUSE_SENSITIVITY = 0.002; 
-        const KEY_SENSITIVITY = 0.0005;   
-        const ZOOM_SENSITIVITY = 0.05;
-        const SPHERE_RADIUS = 100;
-        const MAX_VELOCITY = 2.0 * Math.PI; // Hard cap: 1 rotation per second
+        const MOUSE_SENSITIVITY = 0.002;
+        const KEY_SENSITIVITY   = 0.0005;
+        const ZOOM_SENSITIVITY  = 0.05;
+        const SPHERE_RADIUS     = 100;
+        const MAX_VELOCITY      = 2.0 * Math.PI; // Hard cap: 1 rotation per second
+
+        // Géode par triangulation: icosaèdre dont chaque arête est divisée en 10.
+        // THREE.IcosahedronGeometry(detail) divise chaque arête en (detail + 1)
+        // segments, donc freq 10 => detail 9.  Cf. :
+        // https://fr.wikipedia.org/wiki/Géode_(géométrie)#Géode_par_triangulation
+        const GEODE_EDIVISIONS = 10;
+        const GEODE_DETAIL     = GEODE_EDIVISIONS - 1;
+
+        // Coordinate grid: latitude / longitude only, every 15°.
+        const GRID_STEP_DEG = 15;
 
         // Ornstein-Uhlenbeck & Planetary Physics
-        const JUPITER_ROT_VEL = 0.000176; // Planetary spin mean (rad/s)
-        const OU_THETA = 0.92; // Low damping / Mean reversion rate
-        const OU_SIGMA = 0.00005; // Organic volatility
-        const ANCHOR_FOLLOW_RATE = 0.08; // Saccade-safe anchor speed
+        const JUPITER_ROT_VEL     = 0.000176; // Planetary spin mean (rad/s)
+        const OU_THETA            = 0.92;     // Mean reversion rate
+        const OU_SIGMA            = 0.00005;  // Organic volatility
+        const ANCHOR_FOLLOW_RATE  = 0.08;     // Saccade-safe anchor speed
+
+        const CM_FONT = '"Computer Modern", "Latin Modern Roman", Georgia, "Times New Roman", serif';
 
         // --- Scene Setup ---
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        
+        camera.position.set(0, 0, 0);
+        camera.rotation.order = 'YXZ';
+        camera.rotation.y = -Math.PI / 2; // Face the texture's prime meridian (and the SUN)
+
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         document.body.appendChild(renderer.domElement);
 
-        // --- The Interior Sphere ---
-        const geometry = new THREE.SphereGeometry(SPHERE_RADIUS, 64, 64);
-        const material = new THREE.MeshBasicMaterial({ 
-            color: 0x00ffaa, 
-            wireframe: true,
-            side: THREE.BackSide 
-        });
-        const sphere = new THREE.Mesh(geometry, material);
-        scene.add(sphere);
+        // --- The interior shells: one mesh per view mode ---
+        // Each mode is an explicit mesh toggled via .visible — cycling can never
+        // "skip" an image because of a shared-material/needsUpdate pitfall.
+        const viewModes = [
+            {
+                name: "Géode par triangulation — icosaèdre, arêtes divisées en 10 (ν = 10)",
+                theme: 'geodesic',
+                build() {
+                    const geo = new THREE.IcosahedronGeometry(SPHERE_RADIUS * 0.995, GEODE_DETAIL);
+                    const mat = new THREE.MeshBasicMaterial({
+                        color: 0x00ffaa, wireframe: true, side: THREE.BackSide,
+                        transparent: true, opacity: 0.85
+                    });
+                    return new THREE.Mesh(geo, mat);
+                }
+            },
+            {
+                name: "Cassini — global view, enhanced color (NASA/JPL, PIA07782)",
+                theme: 'texture',
+                build() { return texturedSphere('PIA07782.jpg'); }
+            },
+            {
+                name: "Cassini–Juno mix (texture map by floppastrogeo, DeviantArt)",
+                theme: 'texture',
+                build() { return texturedSphere('jupiter_texture_map_of_cassini_and_juno_mixed_by_floppastrogeo_dgjn416.jpg'); }
+            }
+        ];
 
-        // --- The SUN Reference ---
+        function texturedSphere(url) {
+            const geo = new THREE.SphereGeometry(SPHERE_RADIUS, 128, 64);
+            const tex = new THREE.TextureLoader().load(
+                url,
+                (t) => { console.info(`[textures] loaded ${url}`); },
+                undefined,
+                (err) => { console.error(`[textures] FAILED to load ${url}`, err); }
+            );
+            tex.colorSpace = THREE.SRGBColorSpace;
+            tex.wrapS = THREE.RepeatWrapping;
+            const mat = new THREE.MeshBasicMaterial({ map: tex, side: THREE.BackSide });
+            return new THREE.Mesh(geo, mat);
+        }
+
+        const shells = viewModes.map(m => {
+            const mesh = m.build();
+            mesh.visible = false;
+            scene.add(mesh);
+            return mesh;
+        });
+        let currentMode = 0;
+
+        function applyViewMode() {
+            shells.forEach((s, i) => (s.visible = i === currentMode));
+            document.body.classList.toggle('theme-texture', viewModes[currentMode].theme === 'texture');
+            document.getElementById('mode-label').textContent = viewModes[currentMode].name;
+        }
+
+        // --- The SUN Reference (cardinal marker) ---
         const sunGeo = new THREE.SphereGeometry(0.8, 16, 16);
         const sunMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
         const sunMesh = new THREE.Mesh(sunGeo, sunMat);
-        sunMesh.position.set(SPHERE_RADIUS, 0, 0); 
+        sunMesh.position.set(SPHERE_RADIUS + 8, 0, 0);
         scene.add(sunMesh);
 
-        camera.position.set(0, 0, 0);
+        // --- Scientific coordinate grid: latitude & longitude, step 15° ---
+        const gridGroup = new THREE.Group();
+        const GRID_R = SPHERE_RADIUS * 0.985; // slightly inside the shell
+
+        const parallelMat = new THREE.LineBasicMaterial({
+            color: 0x9fd8ff, transparent: true, opacity: 0.5, depthTest: false
+        });
+        const meridianMat = new THREE.LineBasicMaterial({
+            color: 0x9fd8ff, transparent: true, opacity: 0.35, depthTest: false
+        });
+        const equatorMat = new THREE.LineBasicMaterial({
+            color: 0xdff3ff, transparent: true, opacity: 0.9, depthTest: false
+        });
+
+        // Parallels (lines of latitude), every 15° — poles excluded.
+        for (let lat = -75; lat <= 75; lat += GRID_STEP_DEG) {
+            const pts = [];
+            const phi = THREE.MathUtils.degToRad(lat);
+            const y = GRID_R * Math.sin(phi);
+            const r = GRID_R * Math.cos(phi);
+            for (let i = 0; i <= 128; i++) {
+                const lon = (i / 128) * Math.PI * 2;
+                pts.push(new THREE.Vector3(r * Math.cos(lon), y, r * Math.sin(lon)));
+            }
+            const line = new THREE.Line(
+                new THREE.BufferGeometry().setFromPoints(pts),
+                lat === 0 ? equatorMat : parallelMat
+            );
+            line.renderOrder = 900;
+            gridGroup.add(line);
+        }
+
+        // Meridians (lines of longitude), every 15° — pole to pole.
+        // three.js sphere UV convention: texture center (λ = 0°) at +x.
+        for (let lon = 0; lon < 360; lon += GRID_STEP_DEG) {
+            const pts = [];
+            const lam = THREE.MathUtils.degToRad(lon);
+            for (let i = 0; i <= 96; i++) {
+                const phi = -Math.PI / 2 + (i / 96) * Math.PI;
+                pts.push(new THREE.Vector3(
+                    GRID_R * Math.cos(phi) * Math.cos(lam),
+                    GRID_R * Math.sin(phi),
+                    GRID_R * Math.cos(phi) * Math.sin(lam)
+                ));
+            }
+            const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), meridianMat);
+            line.renderOrder = 900;
+            gridGroup.add(line);
+        }
+        scene.add(gridGroup);
+
+        // --- 15° coordinate labels, set in Computer Modern ---
+        const labelSprites = [];
+        function makeLabel(text, position) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const px = 72;
+            ctx.font = `700 ${px}px ${CM_FONT}`;
+            const w = Math.ceil(ctx.measureText(text).width) + 24;
+            canvas.width = w;
+            canvas.height = px + 28;
+            const c2 = canvas.getContext('2d');
+            c2.font = `700 ${px}px ${CM_FONT}`;
+            c2.textBaseline = 'middle';
+            c2.shadowColor = 'rgba(0,0,0,0.9)';
+            c2.shadowBlur = 8;
+            c2.fillStyle = '#eaf6ff';
+            c2.fillText(text, 12, canvas.height / 2);
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.colorSpace = THREE.SRGBColorSpace;
+            const mat = new THREE.SpriteMaterial({
+                map: tex, transparent: true, depthTest: false, opacity: 0.95
+            });
+            const sprite = new THREE.Sprite(mat);
+            const H = 6; // world units tall — legible at r = 100 with FOV 75°
+            sprite.scale.set(H * (canvas.width / canvas.height), H, 1);
+            sprite.position.copy(position);
+            sprite.renderOrder = 1000;
+            return sprite;
+        }
+
+        function latText(lat) {
+            if (lat === 0) return '0°';
+            return `${Math.abs(lat)}°${lat > 0 ? 'N' : 'S'}`;
+        }
+        function lonText(lon) {
+            if (lon === 0) return '0°';
+            if (lon === 180) return '180°';
+            return lon < 180 ? `${lon}°E` : `${360 - lon}°W`;
+        }
+
+        async function buildGridLabels() {
+            // Wait for the Computer Modern webfont so canvas text uses it.
+            try {
+                await Promise.race([
+                    document.fonts.load(`700 72px ${CM_FONT}`),
+                    new Promise(res => setTimeout(res, 1500))
+                ]);
+            } catch (e) { /* fall back to serif */ }
+
+            const LR = GRID_R * 0.99;
+            // Latitude labels along the prime meridian (λ = 0°, facing +x).
+            for (let lat = -75; lat <= 75; lat += GRID_STEP_DEG) {
+                const phi = THREE.MathUtils.degToRad(lat);
+                const p = new THREE.Vector3(LR * Math.cos(phi), LR * Math.sin(phi), 0);
+                const s = makeLabel(latText(lat), p);
+                labelSprites.push(s); gridGroup.add(s);
+            }
+            // Longitude labels along the equator, every 15°.
+            for (let lon = 0; lon < 360; lon += GRID_STEP_DEG) {
+                const lam = THREE.MathUtils.degToRad(lon);
+                const p = new THREE.Vector3(LR * Math.cos(lam), 0.5, LR * Math.sin(lam));
+                const s = makeLabel(lonText(lon), p);
+                labelSprites.push(s); gridGroup.add(s);
+            }
+        }
+        buildGridLabels();
 
         // --- State ---
-        let mouseX = 0; 
-        let mouseY = 0; 
-        let anchorX = 0; 
-        let anchorY = 0;
-        let rotVelX = 0;
-        let rotVelY = 0;
-        let showStatus = false;
+        let mouseX = 0, mouseY = 0;
+        let anchorX = 0, anchorY = 0;
+        let rotVelX = 0, rotVelY = 0;
+        let showData = true;   // V: grid + labels + SUN + velocity vector (on by default)
         let zenMode = false;
+
+        applyViewMode();
 
         // --- Interaction ---
         window.addEventListener('mousemove', (event) => {
@@ -205,23 +443,21 @@
 
         window.addEventListener('keydown', (event) => {
             const key = event.key.toLowerCase();
-            
+
             if (key === 's') {
-                camera.fov -= 2;
-                camera.fov = Math.max(30, Math.min(120, camera.fov));
+                camera.fov = Math.max(30, Math.min(120, camera.fov - 2));
                 camera.updateProjectionMatrix();
             }
             if (key === 'd') {
-                camera.fov += 2;
-                camera.fov = Math.max(30, Math.min(120, camera.fov));
+                camera.fov = Math.max(30, Math.min(120, camera.fov + 2));
                 camera.updateProjectionMatrix();
             }
 
             // Vim Motion
-            if (key === 'h') rotVelY += KEY_SENSITIVITY; 
-            if (key === 'l') rotVelY -= KEY_SENSITIVITY; 
-            if (key === 'k') rotVelX -= KEY_SENSITIVITY; 
-            if (key === 'j') rotVelX += KEY_SENSITIVITY; 
+            if (key === 'h') rotVelY += KEY_SENSITIVITY;
+            if (key === 'l') rotVelY -= KEY_SENSITIVITY;
+            if (key === 'k') rotVelX -= KEY_SENSITIVITY;
+            if (key === 'j') rotVelX += KEY_SENSITIVITY;
 
             // Fullscreen (F)
             if (key === 'f') {
@@ -234,13 +470,23 @@
                 }
             }
 
+            // P: cycle view modes (geode → Cassini → Cassini–Juno mix)
+            if (key === 'p') {
+                currentMode = (currentMode + 1) % viewModes.length;
+                applyViewMode();
+            }
+
+            // V: toggle scientific data (coordinate grid, SUN, velocity vector)
             if (key === 'v') {
                 if (zenMode) return;
-                showStatus = !showStatus;
-                document.getElementById('status-overlay').style.display = showStatus ? 'block' : 'none';
-                document.getElementById('sun-marker').style.display = showStatus ? 'block' : 'none';
+                showData = !showData;
+                gridGroup.visible = showData;
+                sunMesh.visible = showData;
+                document.getElementById('status-overlay').style.display = showData ? 'block' : 'none';
+                document.getElementById('sun-marker').style.display = 'none';
             }
-            
+
+            // Z: full zen mode
             if (key === 'z') {
                 zenMode = !zenMode;
                 const body = document.getElementById('body');
@@ -249,7 +495,7 @@
                 const status = document.getElementById('status-overlay');
                 const sun = document.getElementById('sun-marker');
                 const dot = document.getElementById('center-dot');
-                
+
                 if (zenMode) {
                     body.classList.add('zen-mode');
                     ui.classList.add('hidden');
@@ -257,19 +503,22 @@
                     status.style.display = 'none';
                     sun.style.display = 'none';
                     dot.style.opacity = '0';
-                    showStatus = false;
+                    gridGroup.visible = false;
+                    sunMesh.visible = false;
                 } else {
                     body.classList.remove('zen-mode');
                     ui.classList.remove('hidden');
                     footer.classList.remove('hidden');
-                    dot.style.opacity = '1';
+                    dot.style.opacity = '0.35';
+                    gridGroup.visible = showData;
+                    sunMesh.visible = showData;
+                    status.style.display = showData ? 'block' : 'none';
                 }
             }
         });
 
         window.addEventListener('wheel', (event) => {
-            camera.fov += event.deltaY * ZOOM_SENSITIVITY;
-            camera.fov = Math.max(30, Math.min(120, camera.fov));
+            camera.fov = Math.max(30, Math.min(120, camera.fov + event.deltaY * ZOOM_SENSITIVITY));
             camera.updateProjectionMatrix();
         }, { passive: true });
 
@@ -279,23 +528,26 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        const arrowLine = document.getElementById('arrow-line');
-        const sunMarker = document.getElementById('sun-marker');
+        const arrowLine   = document.getElementById('arrow-line');
+        const speedReadout = document.getElementById('speed-readout');
+        const sunMarker   = document.getElementById('sun-marker');
 
         function updateStatusUI() {
-            if (!showStatus || zenMode) return;
-            
-            const speed = Math.sqrt(rotVelX*rotVelX + rotVelY*rotVelY);
-            const length = Math.min(150, speed * 1500);
+            if (!showData || zenMode) return;
+
+            const speed = Math.sqrt(rotVelX * rotVelX + rotVelY * rotVelY);
+            const length = Math.min(400, 12 + speed * 4000); // large, clearly visible vector
             arrowLine.style.height = `${length}px`;
-            
+
             const visualAngle = Math.atan2(mouseY, mouseX) * (180 / Math.PI);
             arrowLine.style.transform = `translate(-50%, -100%) rotate(${visualAngle + 90}deg)`;
+
+            speedReadout.textContent = `ω = ${speed.toFixed(4)} rad/s`;
 
             const vector = sunMesh.position.clone().project(camera);
             const x = (vector.x * 0.5 + 0.5) * window.innerWidth;
             const y = (vector.y * -0.5 + 0.5) * window.innerHeight;
-            
+
             if (vector.z < 1) {
                 sunMarker.style.left = `${x}px`;
                 sunMarker.style.top = `${y}px`;
@@ -313,13 +565,13 @@
             anchorY += (mouseY - anchorY) * ANCHOR_FOLLOW_RATE;
 
             // 2. Acceleration relative to anchor
-            const accelY = (mouseX - anchorX) * -MOUSE_SENSITIVITY; 
-            const accelX = (mouseY - anchorY) * MOUSE_SENSITIVITY;  
+            const accelY = (mouseX - anchorX) * -MOUSE_SENSITIVITY;
+            const accelX = (mouseY - anchorY) * MOUSE_SENSITIVITY;
 
             // 3. Ornstein-Uhlenbeck Diffusion
             // Convergence to Jupiter's spin on Y, and 0 on X
-            rotVelY = rotVelY + OU_THETA * (JUPITER_ROT_VEL - rotVelY) * 0.016 + (Math.random() - 0.5) * OU_SIGMA;
-            rotVelX = rotVelX + OU_THETA * (0 - rotVelX) * 0.016 + (Math.random() - 0.5) * OU_SIGMA;
+            rotVelY += OU_THETA * (JUPITER_ROT_VEL - rotVelY) * 0.016 + (Math.random() - 0.5) * OU_SIGMA;
+            rotVelX += OU_THETA * (0 - rotVelX) * 0.016 + (Math.random() - 0.5) * OU_SIGMA;
 
             rotVelY += accelY;
             rotVelX += accelX;
@@ -330,6 +582,7 @@
 
             camera.rotation.y += rotVelY;
             camera.rotation.x += rotVelX;
+            camera.rotation.x = Math.max(-Math.PI / 2 + 0.01, Math.min(Math.PI / 2 - 0.01, camera.rotation.x));
 
             updateStatusUI();
             renderer.render(scene, camera);
