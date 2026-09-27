@@ -19,14 +19,68 @@
             z-index: 10;
         }
         h1 { margin: 0; font-weight: 300; font-size: 24px; letter-spacing: 4px; text-transform: uppercase; }
-        p { opacity: 0.7; font-size: 14px; margin-top: 8px; font-weight: 300; }
+        p { opacity: 0.7; font-size: 14px; margin-top: 8px; font-weight: 300; line-height: 1.6; }
+        
+        #status-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 300px;
+            pointer-events: none;
+            display: none;
+            z-index: 5;
+        }
+        #speed-arrow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 6px;
+            height: 6px;
+            background: #00ffaa;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+        #arrow-line {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 2px;
+            height: 0px;
+            background: linear-gradient(to top, transparent, #00ffaa);
+            transform-origin: bottom center;
+            transform: translate(-50%, -100%);
+            transition: height 0.1s ease-out;
+        }
+        #sun-marker {
+            position: absolute;
+            color: #ffff00;
+            font-family: monospace;
+            font-size: 12px;
+            font-weight: bold;
+            pointer-events: none;
+            text-shadow: 0 0 5px #ffff00;
+            transform: translate(-50%, -50%);
+            display: none;
+        }
     </style>
 </head>
 <body>
     <div id="ui">
         <h1>Jupiter Interior</h1>
-        <p>Navigate the surface from the center • Move mouse to look around</p>
+        <p>
+            Mouse distance from center controls rotation speed<br>
+            Scroll/Pinch to zoom • Press 'S' for navigation data
+        </p>
     </div>
+
+    <div id="status-overlay">
+        <div id="speed-arrow">
+            <div id="arrow-line"></div>
+        </div>
+    </div>
+    <div id="sun-marker">SUN</div>
 
     <script type="importmap">
         {
@@ -40,8 +94,9 @@
         import * as THREE from 'three';
 
         // --- Configuration ---
-        const SENSITIVITY = 2.5; // Max rotation radians
-        const EASING = 0.07;     // Smoothing factor
+        const VELOCITY_SENSITIVITY = 0.012; 
+        const FRICTION = 0.985; 
+        const ZOOM_SENSITIVITY = 0.05;
         const SPHERE_RADIUS = 100;
 
         // --- Scene Setup ---
@@ -54,29 +109,50 @@
         document.body.appendChild(renderer.domElement);
 
         // --- The Interior Sphere ---
-        // Use SphereGeometry and THREE.BackSide to make the surface visible from the inside
         const geometry = new THREE.SphereGeometry(SPHERE_RADIUS, 64, 64);
         const material = new THREE.MeshBasicMaterial({ 
             color: 0x00ffaa, 
             wireframe: true,
             side: THREE.BackSide 
         });
-        
         const sphere = new THREE.Mesh(geometry, material);
         scene.add(sphere);
 
-        // Camera at the origin
+        // --- The SUN (Reference Point) ---
+        const sunGeo = new THREE.SphereGeometry(0.8, 16, 16);
+        const sunMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+        const sunMesh = new THREE.Mesh(sunGeo, sunMat);
+        sunMesh.position.set(SPHERE_RADIUS, 0, 0); 
+        scene.add(sunMesh);
+
         camera.position.set(0, 0, 0);
 
-        // --- Interaction ---
+        // --- State ---
         let mouseX = 0; 
         let mouseY = 0; 
+        let rotVelX = 0;
+        let rotVelY = 0;
+        let showStatus = false;
 
+        // --- Interaction ---
         window.addEventListener('mousemove', (event) => {
-            // Normalize cursor position to range [-0.5, 0.5]
             mouseX = (event.clientX / window.innerWidth) - 0.5;
             mouseY = (event.clientY / window.innerHeight) - 0.5;
         });
+
+        window.addEventListener('keydown', (event) => {
+            if (event.key.toLowerCase() === 's') {
+                showStatus = !showStatus;
+                document.getElementById('status-overlay').style.display = showStatus ? 'block' : 'none';
+                document.getElementById('sun-marker').style.display = showStatus ? 'block' : 'none';
+            }
+        });
+
+        window.addEventListener('wheel', (event) => {
+            camera.fov += event.deltaY * ZOOM_SENSITIVITY;
+            camera.fov = Math.max(30, Math.min(120, camera.fov));
+            camera.updateProjectionMatrix();
+        }, { passive: true });
 
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
@@ -84,19 +160,53 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
+        // UI Elements for status
+        const arrowLine = document.getElementById('arrow-line');
+        const sunMarker = document.getElementById('sun-marker');
+
+        function updateStatusUI() {
+            if (!showStatus) return;
+            
+            // Speed arrow
+            const speed = Math.sqrt(rotVelX*rotVelX + rotVelY*rotVelY);
+            const length = Math.min(150, speed * 1500);
+            arrowLine.style.height = `${length}px`;
+            
+            const visualAngle = Math.atan2(mouseY, mouseX) * (180 / Math.PI);
+            arrowLine.style.transform = `translate(-50%, -100%) rotate(${visualAngle + 180}deg)`;
+
+            // SUN label projection
+            const vector = sunMesh.position.clone().project(camera);
+            const x = (vector.x * 0.5 + 0.5) * window.innerWidth;
+            const y = (vector.y * -0.5 + 0.5) * window.innerHeight;
+            
+            // Only show label if it's in front of the camera
+            if (vector.z < 1) {
+                sunMarker.style.left = `${x}px`;
+                sunMarker.style.top = `${y}px`;
+                sunMarker.style.display = 'block';
+            } else {
+                sunMarker.style.display = 'none';
+            }
+        }
+
         // --- Render Loop ---
         function animate() {
             requestAnimationFrame(animate);
 
-            // Azimuth (Y-rotation) and Elevation (X-rotation)
-            // Movement is proportional to eccentricity from center
-            const targetRotY = mouseX * SENSITIVITY;
-            const targetRotX = mouseY * SENSITIVITY;
+            // Acceleration based on eccentricity
+            rotVelY += mouseX * VELOCITY_SENSITIVITY;
+            rotVelX += mouseY * VELOCITY_SENSITIVITY;
 
-            // Smooth interpolation for a high-quality feel
-            camera.rotation.y += (targetRotY - camera.rotation.y) * EASING;
-            camera.rotation.x += (targetRotX - camera.rotation.x) * EASING;
+            // Friction for drift
+            rotVelX *= FRICTION;
+            rotVelY *= FRICTION;
 
+            // Apply to camera rotation
+            camera.rotation.y += rotVelY;
+            camera.rotation.x += rotVelX;
+
+            updateStatusUI();
             renderer.render(scene, camera);
         }
 
