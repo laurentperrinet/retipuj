@@ -11,10 +11,10 @@
             position: absolute;
             top: 30px;
             left: 30px;
-            color: #00ffaa;
+            color: #00E5FF; /* Video Blue */
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             pointer-events: none;
-            text-shadow: 0 0 15px rgba(0,255,170,0.4);
+            text-shadow: 0 0 15px rgba(0, 229, 255, 0.4);
             user-select: none;
             z-index: 10;
             transition: opacity 0.5s ease;
@@ -40,7 +40,7 @@
             left: 50%;
             width: 6px;
             height: 6px;
-            background: #00ffaa;
+            background: #00E5FF;
             border-radius: 50%;
             transform: translate(-50%, -50%);
         }
@@ -50,7 +50,7 @@
             left: 50%;
             width: 2px;
             height: 0px;
-            background: linear-gradient(to top, transparent, #00ffaa);
+            background: linear-gradient(to top, transparent, #00E5FF);
             transform-origin: bottom center;
             transform: translate(-50%, -100%);
             transition: height 0.1s ease-out;
@@ -72,7 +72,7 @@
             left: 50%;
             width: 4px;
             height: 4px;
-            background: rgba(0, 255, 170, 0.3);
+            background: rgba(0, 229, 255, 0.3);
             border-radius: 50%;
             transform: translate(-50%, -50%);
             pointer-events: none;
@@ -93,7 +93,7 @@
         <h1>Jupiter Interior</h1>
         <p>
             Mouse distance from center controls rotation speed<br>
-            View: 'P' (Texture/Grid) • Zoom: 'S' / 'D' • Motion: 'J' 'K' 'L' 'M'<br>
+            View: 'P' (Texture/Grid) • Grid: 'C' • Zoom: 'S' / 'D' • Motion: 'J' 'K' 'L' 'M'<br>
             Data: 'V' • Zen Mode: 'H'
         </p>
     </div>
@@ -132,14 +132,19 @@
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
+        
+        // Fix Saturation/Color Accuracy
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+        
         document.body.appendChild(renderer.domElement);
 
-        // --- Materials ---
+        // --- Materials & Textures ---
         const textureLoader = new THREE.TextureLoader();
         const jupiterTexture = textureLoader.load('PIA07782.jpg');
+        jupiterTexture.colorSpace = THREE.SRGBColorSpace; // Ensure texture is treated as sRGB for correct saturation
 
         const wireframeMaterial = new THREE.MeshBasicMaterial({ 
-            color: 0x00ffaa, 
+            color: 0x00E5FF, 
             wireframe: true,
             side: THREE.BackSide 
         });
@@ -149,10 +154,24 @@
             side: THREE.BackSide 
         });
 
-        // --- The Interior Sphere ---
+        // --- The Interior Sphere (Surface) ---
         const geometry = new THREE.SphereGeometry(SPHERE_RADIUS, 64, 64);
-        const sphere = new THREE.Mesh(geometry, wireframeMaterial);
+        const sphere = new THREE.Mesh(geometry, textureMaterial); // Default to texture
         scene.add(sphere);
+
+        // --- The Coordinate Grid (Overlay) ---
+        // We use a slightly larger radius to prevent Z-fighting (depth flickering)
+        const gridGeometry = new THREE.SphereGeometry(SPHERE_RADIUS + 0.1, 32, 32);
+        const gridMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0x00E5FF, 
+            wireframe: true, 
+            side: THREE.BackSide,
+            transparent: true,
+            opacity: 0.3
+        });
+        const gridOverlay = new THREE.Mesh(gridGeometry, gridMaterial);
+        gridOverlay.visible = false; // Hidden by default
+        scene.add(gridOverlay);
 
         // --- The SUN (Reference Point) ---
         const sunGeo = new THREE.SphereGeometry(0.8, 16, 16);
@@ -170,7 +189,7 @@
         let rotVelY = 0;
         let showStatus = false;
         let zenMode = false;
-        let isWireframe = true;
+        let isWireframe = false; // Default to texture
 
         // --- Interaction ---
         window.addEventListener('mousemove', (event) => {
@@ -181,10 +200,15 @@
         window.addEventListener('keydown', (event) => {
             const key = event.key.toLowerCase();
             
-            // View Toggle
+            // View Toggle (Texture vs Pure Wireframe)
             if (key === 'p') {
                 isWireframe = !isWireframe;
                 sphere.material = isWireframe ? wireframeMaterial : textureMaterial;
+            }
+
+            // Grid Toggle
+            if (key === 'c') {
+                gridOverlay.visible = !gridOverlay.visible;
             }
 
             // Zoom
