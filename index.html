@@ -11,16 +11,40 @@
             position: absolute;
             top: 30px;
             left: 30px;
-            color: #00E5FF; /* Video Blue */
+            color: #00ffaa;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             pointer-events: none;
-            text-shadow: 0 0 15px rgba(0, 229, 255, 0.4);
+            text-shadow: 0 0 15px rgba(0,255,170,0.4);
             user-select: none;
             z-index: 10;
             transition: opacity 0.5s ease;
         }
         h1 { margin: 0; font-weight: 300; font-size: 24px; letter-spacing: 4px; text-transform: uppercase; }
         p { opacity: 0.7; font-size: 14px; margin-top: 8px; font-weight: 300; line-height: 1.6; }
+        
+        #footer {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            color: #00ffaa;
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+            font-weight: 300;
+            letter-spacing: 1px;
+            opacity: 0.5;
+            transition: opacity 0.5s ease;
+            z-index: 10;
+        }
+        #footer a {
+            color: #00ffaa;
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.3s ease;
+        }
+        #footer a:hover {
+            border-bottom-color: #00ffaa;
+        }
         
         #status-overlay {
             position: absolute;
@@ -40,7 +64,7 @@
             left: 50%;
             width: 6px;
             height: 6px;
-            background: #00E5FF;
+            background: #00ffaa;
             border-radius: 50%;
             transform: translate(-50%, -50%);
         }
@@ -50,7 +74,7 @@
             left: 50%;
             width: 2px;
             height: 0px;
-            background: linear-gradient(to top, transparent, #00E5FF);
+            background: linear-gradient(to top, transparent, #00ffaa);
             transform-origin: bottom center;
             transform: translate(-50%, -100%);
             transition: height 0.1s ease-out;
@@ -72,7 +96,7 @@
             left: 50%;
             width: 4px;
             height: 4px;
-            background: rgba(0, 229, 255, 0.3);
+            background: rgba(0, 255, 170, 0.3);
             border-radius: 50%;
             transform: translate(-50%, -50%);
             pointer-events: none;
@@ -92,10 +116,14 @@
     <div id="ui">
         <h1>Jupiter Interior</h1>
         <p>
-            Mouse distance from center controls rotation speed<br>
-            View: 'P' (Texture/Grid) • Grid: 'C' • Zoom: 'S' / 'D' • Motion: 'J' 'K' 'L' 'M'<br>
-            Data: 'V' • Zen Mode: 'H'
+            Saccade-safe mouse navigation • Drift powered by OU-diffusion<br>
+            Zoom: 'S' (In) / 'D' (Out) • Motion: H J K L (Vim)<br>
+            Data: 'V' • Zen Mode: 'Z'
         </p>
+    </div>
+
+    <div id="footer">
+        © Licensed by <a href="https://laurentperrinet.github.io" target="_blank">laurentperrinet.github.io</a>
     </div>
 
     <div id="center-dot"></div>
@@ -119,11 +147,15 @@
         import * as THREE from 'three';
 
         // --- Configuration ---
-        const VELOCITY_SENSITIVITY = 0.006; 
+        const MOUSE_SENSITIVITY = 0.008; 
         const KEY_SENSITIVITY = 0.002;     
-        const FRICTION = 0.98; 
         const ZOOM_SENSITIVITY = 0.05;
         const SPHERE_RADIUS = 100;
+
+        // Ornstein-Uhlenbeck Parameters
+        const OU_THETA = 0.98; 
+        const OU_SIGMA = 0.0001; 
+        const ANCHOR_FOLLOW_RATE = 0.1; 
 
         // --- Scene Setup ---
         const scene = new THREE.Scene();
@@ -132,46 +164,17 @@
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
-        
-        // Fix Saturation/Color Accuracy
-        renderer.outputColorSpace = THREE.SRGBColorSpace;
-        
         document.body.appendChild(renderer.domElement);
 
-        // --- Materials & Textures ---
-        const textureLoader = new THREE.TextureLoader();
-        const jupiterTexture = textureLoader.load('PIA07782.jpg');
-        jupiterTexture.colorSpace = THREE.SRGBColorSpace; // Ensure texture is treated as sRGB for correct saturation
-
-        const wireframeMaterial = new THREE.MeshBasicMaterial({ 
-            color: 0x00E5FF, 
+        // --- The Interior Sphere ---
+        const geometry = new THREE.SphereGeometry(SPHERE_RADIUS, 64, 64);
+        const material = new THREE.MeshBasicMaterial({ 
+            color: 0x00ffaa, 
             wireframe: true,
             side: THREE.BackSide 
         });
-
-        const textureMaterial = new THREE.MeshBasicMaterial({ 
-            map: jupiterTexture,
-            side: THREE.BackSide 
-        });
-
-        // --- The Interior Sphere (Surface) ---
-        const geometry = new THREE.SphereGeometry(SPHERE_RADIUS, 64, 64);
-        const sphere = new THREE.Mesh(geometry, textureMaterial); // Default to texture
+        const sphere = new THREE.Mesh(geometry, material);
         scene.add(sphere);
-
-        // --- The Coordinate Grid (Overlay) ---
-        // We use a slightly larger radius to prevent Z-fighting (depth flickering)
-        const gridGeometry = new THREE.SphereGeometry(SPHERE_RADIUS + 0.1, 32, 32);
-        const gridMaterial = new THREE.MeshBasicMaterial({ 
-            color: 0x00E5FF, 
-            wireframe: true, 
-            side: THREE.BackSide,
-            transparent: true,
-            opacity: 0.3
-        });
-        const gridOverlay = new THREE.Mesh(gridGeometry, gridMaterial);
-        gridOverlay.visible = false; // Hidden by default
-        scene.add(gridOverlay);
 
         // --- The SUN (Reference Point) ---
         const sunGeo = new THREE.SphereGeometry(0.8, 16, 16);
@@ -185,11 +188,12 @@
         // --- State ---
         let mouseX = 0; 
         let mouseY = 0; 
+        let anchorX = 0; 
+        let anchorY = 0;
         let rotVelX = 0;
         let rotVelY = 0;
         let showStatus = false;
         let zenMode = false;
-        let isWireframe = false; // Default to texture
 
         // --- Interaction ---
         window.addEventListener('mousemove', (event) => {
@@ -200,18 +204,6 @@
         window.addEventListener('keydown', (event) => {
             const key = event.key.toLowerCase();
             
-            // View Toggle (Texture vs Pure Wireframe)
-            if (key === 'p') {
-                isWireframe = !isWireframe;
-                sphere.material = isWireframe ? wireframeMaterial : textureMaterial;
-            }
-
-            // Grid Toggle
-            if (key === 'c') {
-                gridOverlay.visible = !gridOverlay.visible;
-            }
-
-            // Zoom
             if (key === 's') {
                 camera.fov -= 2;
                 camera.fov = Math.max(30, Math.min(120, camera.fov));
@@ -223,13 +215,11 @@
                 camera.updateProjectionMatrix();
             }
 
-            // Motion (JKL M)
-            if (key === 'j') rotVelY += KEY_SENSITIVITY; // Left
-            if (key === 'l') rotVelY -= KEY_SENSITIVITY; // Right
-            if (key === 'k') rotVelX -= KEY_SENSITIVITY; // Up
-            if (key === 'm') rotVelX += KEY_SENSITIVITY; // Down
+            if (key === 'h') rotVelY += KEY_SENSITIVITY; 
+            if (key === 'l') rotVelY -= KEY_SENSITIVITY; 
+            if (key === 'k') rotVelX -= KEY_SENSITIVITY; 
+            if (key === 'j') rotVelX += KEY_SENSITIVITY; 
 
-            // Status
             if (key === 'v') {
                 if (zenMode) return;
                 showStatus = !showStatus;
@@ -237,11 +227,11 @@
                 document.getElementById('sun-marker').style.display = showStatus ? 'block' : 'none';
             }
             
-            // Zen Mode
-            if (key === 'h') {
+            if (key === 'z') {
                 zenMode = !zenMode;
                 const body = document.getElementById('body');
                 const ui = document.getElementById('ui');
+                const footer = document.getElementById('footer');
                 const status = document.getElementById('status-overlay');
                 const sun = document.getElementById('sun-marker');
                 const dot = document.getElementById('center-dot');
@@ -249,6 +239,7 @@
                 if (zenMode) {
                     body.classList.add('zen-mode');
                     ui.classList.add('hidden');
+                    footer.classList.add('hidden');
                     status.style.display = 'none';
                     sun.style.display = 'none';
                     dot.style.opacity = '0';
@@ -256,6 +247,7 @@
                 } else {
                     body.classList.remove('zen-mode');
                     ui.classList.remove('hidden');
+                    footer.classList.remove('hidden');
                     dot.style.opacity = '1';
                 }
             }
@@ -273,7 +265,6 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        // UI Elements for status
         const arrowLine = document.getElementById('arrow-line');
         const sunMarker = document.getElementById('sun-marker');
 
@@ -300,15 +291,20 @@
             }
         }
 
-        // --- Render Loop ---
         function animate() {
             requestAnimationFrame(animate);
 
-            rotVelY -= mouseX * VELOCITY_SENSITIVITY;
-            rotVelX += mouseY * VELOCITY_SENSITIVITY;
+            anchorX += (mouseX - anchorX) * ANCHOR_FOLLOW_RATE;
+            anchorY += (mouseY - anchorY) * ANCHOR_FOLLOW_RATE;
 
-            rotVelX *= FRICTION;
-            rotVelY *= FRICTION;
+            const accelY = (mouseX - anchorX) * -MOUSE_SENSITIVITY; 
+            const accelX = (mouseY - anchorY) * MOUSE_SENSITIVITY;  
+
+            rotVelY = rotVelY + OU_THETA * (0 - rotVelY) * 0.016 + (Math.random() - 0.5) * OU_SIGMA;
+            rotVelX = rotVelX + OU_THETA * (0 - rotVelX) * 0.016 + (Math.random() - 0.5) * OU_SIGMA;
+
+            rotVelY += accelY;
+            rotVelX += accelX;
 
             camera.rotation.y += rotVelY;
             camera.rotation.x += rotVelX;
