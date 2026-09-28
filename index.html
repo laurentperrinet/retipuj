@@ -214,9 +214,18 @@
             text-shadow: 0 1px 6px rgba(0,0,0,.8);
         }
         body.theme-texture #footer { text-shadow: 0 1px 6px rgba(255,255,255,.8); }
-        #footer a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; }
-        #footer a:hover { border-bottom-color: var(--accent); }
-          /* --- GitHub badge: the door to the source code ---------------------
+          /* The footer plate is click-through — pointer-events:none on #footer lets the
+             pointer steer the shell even over the credits — which is also what made its
+             links unclickable. The anchors opt back in, with a real cursor, a wider hit
+             area, and a keyboard focus ring. */
+          #footer a { color: var(--accent); text-decoration: none;
+                      border-bottom: 1px solid transparent;
+                      pointer-events: auto; cursor: pointer;
+                      padding: 3px 2px 1px; border-radius: 3px; }
+          #footer a:hover, #footer a:focus-visible { border-bottom-color: var(--accent);
+                                                     opacity: 1; }
+          #footer a:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }
+/* --- GitHub badge: the door to the source code ---------------------
               Same plate language as the other instruments, mirrored top-right so
               it never competes with the title plate. Ink follows the theme:
               matrix green over the geodesic, atlas blue over Jupiter's maps. */
@@ -401,9 +410,12 @@
            Copyleft 2026
            <a href="https://laurentperrinet.github.io" target="_blank" rel="noopener">Laurent Perrinet</a> &bull;
            code under
-           <a href="LICENSE" target="_blank" rel="noopener">GNU AGPL-3.0-or-later</a> &bull;
-           <a href="https://github.com/laurentperrinet/retipuj" target="_blank" rel="noopener">Source</a> &bull;
-           imagery <a href="README.md" target="_blank" rel="noopener">NASA / SWRI / floppastrogeo</a>
+           <a href="https://github.com/laurentperrinet/retipuj/blob/main/LICENSE"
+              target="_blank" rel="noopener">GNU AGPL-3.0-or-later</a> &bull;
+           <a href="https://github.com/laurentperrinet/retipuj"
+              target="_blank" rel="noopener">Source</a> &bull;
+           imagery <a href="https://github.com/laurentperrinet/retipuj/blob/main/README.md#-data-sources--licensing"
+              target="_blank" rel="noopener">NASA / SWRI / floppastrogeo</a>
          </div>
 
        <!-- GitHub mark (Octicons, MIT) — the door to the source repository -->
@@ -1251,9 +1263,13 @@ function doAction(act, e) {
   if (act === 'zen') { setZen(!zen); return; }
 }
 
-// hovering the bar parks the pointer: pressing a button must never whip the camera
-controls.addEventListener('pointerenter', () => { mouse.overUI = true; });
-controls.addEventListener('pointerleave', () => { mouse.overUI = false; uiZoom = 0; });
+// Hovering an instrument parks the pointer: pressing a button — or reaching for
+// a footer link — must never whip the camera.
+function parkPointerWhileHovering(node) {
+  node.addEventListener('pointerenter', () => { mouse.overUI = true; });
+  node.addEventListener('pointerleave', () => { mouse.overUI = false; uiZoom = 0; });
+}
+[controls, el.footer].forEach(parkPointerWhileHovering);
 ctlButtons.forEach(b => {
   const act = b.dataset.act;
   const zoomDir = act === 'zoomIn' ? -1 : act === 'zoomOut' ? 1 : 0;
