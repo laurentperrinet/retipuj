@@ -4,7 +4,7 @@ An immersive 3D visualization that allows you to explore the surface of Jupiter 
 
 ## 🌌 The Concept
 
-Instead of looking at the planet from space, this project places you at the center of Jupiter. You are surrounded by a massive spherical shell representing the planetary surface, allowing you to navigate the clouds and storm systems from a central perspective.
+Instead of looking at the planet from space, this project places you at the center of Jupiter. You are surrounded by a massive spherical shell representing the planetary surface, allowing you to navigate the clouds and storm systems from a central perspective. (Disclaimer — this is a simulation, not a scientific model of Jupiter's interior. Jupiter is not empty, and the interior is not hollow. Right?)
 
 ## 🎨 Design Guidelines
 
@@ -15,7 +15,7 @@ The project aims to translate complex astronomical data into an intuitive spatia
 - **Projection**: It utilizes equirectangular cylindrical maps wrapped onto a sphere, ensuring that the spatial relationships of Jupiter's cloud bands and the Great Red Spot are preserved from the observer's central perspective.
 - **Orientation**: A virtual "SUN" marker provides a cardinal reference point, helping the user understand their orientation within the planetary shell.
 - **Scaling**: The use of a wide Field of View (FOV) simulation mimics the experience of being inside a gargantuan sphere, where the horizon curves away from the observer.
-- **Tessellation**: The wireframe view is a *géode par triangulation* — an icosahedron whose every edge is divided in 10 ([frequency ν = 10](https://fr.wikipedia.org/wiki/G%C3%A9ode_(g%C3%A9om%C3%A9trie)#G%C3%A9ode_par_triangulation)), yielding 2,000 near-equilateral triangular facets.
+- **Tessellation**: The wireframe view is a *geodesic by triangulation* — an icosahedron whose every edge is divided in 10 ([frequency ν = 10](https://en.wikipedia.org/wiki/Geodesic_dome#Icosahedron-based_geodesic_domes)), yielding 2,000 near-equilateral triangular facets.
 - **Coordinate system**: A scientific grid of latitude and longitude lines is drawn every 15°, with values labeled in steps of 15° (e.g. *15°N*, *30°S*, *45°E*) typeset in [Computer Modern / Latin Modern](https://www.ctan.org/tex-archive/fonts/lm/), the classic TeX typeface.
 
 ### Aesthetics: "The Digital Observatory"
@@ -57,7 +57,7 @@ The visual language of this project is inspired by futuristic planetary observat
      1. **Cassini–Juno mix** *(the default view on load)* — the equirectangular texture map by
       floppastrogeo (`jupiter_texture_map_of_cassini_and_juno_mixed_by_floppastrogeo_dgjn416.jpg`).
      2. **Cassini** — NASA/JPL enhanced-color cylindrical map (`PIA07782.jpg`).
-     3. **Géode** — the sun-lit icosahedral triangulation, ν = 10, 2,000 facets.
+      3. **Triangulated geodesic** — the sun-lit icosahedral triangulation, ν = 10, 2,000 facets.
   Each view gets its own mesh (never a shared material), so a map can never be "skipped" when
   cycling, and the interface recolours itself: matrix green over the geodesic, **dark blue**
   ink on a pale plate over Jupiter's images.
@@ -115,7 +115,7 @@ The planetary surface textures used in this project are sourced from:
 
 ### Licensing
 
-- **Code**: This project is released under the **[MIT License](LICENSE)**.
+- **Code**: 🄯 This project is **copylefted** and released under the **[GNU AGPL-3.0-or-later](LICENSE)**: you may use, study, share and adapt the code, as long as derivatives carry the same licence and make their source available — including when the visualization is served to users over a network.
 - **Imagery**: Imagery is used under **Fair Use** for educational and non-commercial
   visualization purposes. All rights to the original textures belong to their respective
   creators and agencies (NASA / JPL / Caltech / SWRI / MSSS / Floppastrogeo).
@@ -137,4 +137,4 @@ The planetary surface textures used in this project are sourced from:
 - **Library**: [three.js](https://threejs.org/) (MIT).
 
 > Not redistributing the imagery: only the two maps needed by the visualization are kept in the
-> repository, together with their provenance. See [LICENSE](LICENSE) for the code licence.
+> repository, together with their provenance. See [LICENSE](LICENSE) for the code licence (🄯 Copyleft 2026 Laurent Perrinet).

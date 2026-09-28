@@ -1,4 +1,22 @@
 <!DOCTYPE html>
+<!--
+    🄯 Copyleft 2026 Laurent Perrinet  |  Jupiter from the Inside  |  SPDX-License-Identifier: AGPL-3.0-or-later
+
+    This program is free software: you can redistribute it and/or modify it under the
+    terms of the GNU Affero General Public License as published by the Free Software
+    Foundation, either version 3 of the License, or (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful, but WITHOUT ANY
+    WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+    PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+
+    You should have received a copy of the GNU Affero General Public License along with
+    this program. If not, see <https://www.gnu.org/licenses/agpl-3.0.html>.
+
+    Source: https://github.com/laurentperrinet/retipuj     (AGPL-3.0-or-later)
+    Third-party: three.js (MIT), Latin Modern Roman (GUST Font License), Inter (SIL OFL 1.1).
+    Planetary imagery keeps its own provenance and licence: see README.md.
+     -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -63,7 +81,7 @@
             --grid-label: #f4faff;
         }
 
-         /* --- UI plate ------------------------------------------------------ */
+         /* --- UI plate ---------------------------------------------------- */
         #ui {
             position: absolute;
             top: 26px;
@@ -115,7 +133,7 @@
             margin-top: 3px;
         }
 
-         /* --- Big announcement when the map changes ------------------------- */
+         /* --- Big announcement when the map changes ----------------------- */
         #mode-announce {
             position: absolute;
             top: 50%;
@@ -140,12 +158,11 @@
             100% { opacity: 0; transform: translate(-50%, -52%); }
         }
 
-         /* --- Telemetry plate (V) ------------------------------------------- */
-        #telemetry {
+         /* --- Telemetry plate (V) ----------------------------------------- */
+         #telemetry {
             position: absolute;
             bottom: 26px;
             left: 26px;
-            display: none;
             z-index: 11;
             color: var(--accent);
             font-family: 'Computer Modern', 'Latin Modern Roman', Georgia, serif;
@@ -161,7 +178,7 @@
             user-select: none;
             white-space: nowrap;
             transition: color .6s ease, background .6s ease;
-        }
+         }
         #telemetry .k { opacity: .6; font-style: italic; }
         #telemetry .v { font-weight: 700; }
         #telemetry .head {
@@ -174,7 +191,7 @@
             text-transform: uppercase;
         }
 
-         /* --- Footer -------------------------------------------------------- */
+         /* --- Footer ------------------------------------------------------ */
         #footer {
             position: absolute;
             bottom: 18px;
@@ -194,14 +211,13 @@
         #footer a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; }
         #footer a:hover { border-bottom-color: var(--accent); }
 
-         /* --- V mode: navigation-data overlay (canvas) ---------------------- */
-        #hud {
+         /* --- V: navigation-data overlay (full-screen canvas) ------------- */
+         #hud {
             position: absolute;
             inset: 0;
             z-index: 12;
             pointer-events: none;
-            display: none;
-        }
+         }
         #center-dot {
             position: absolute;
             top: 50%;
@@ -216,15 +232,22 @@
             z-index: 5;
             transition: opacity .3s ease, background .6s ease;
         }
-         .zen-mode { cursor: none !important; }
+         .copyleft {
+            width: 13px;
+            height: 13px;
+            display: inline-block;
+            vertical-align: -2px;
+            margin-right: 1px;
+         }
+          body.zen-mode { cursor: none !important; }
          body.zen-mode #hud { display: none; }
          .hidden { opacity: 0 !important; pointer-events: none !important; }
      </style>
 </head>
-<body id="body" data-view="geodesic">
+<body id="body">
      <div id="ui">
          <h1>Jupiter from the Inside</h1>
-         <div id="subtitle">g&eacute;ode par triangulation &amp; cartes Cassini / Juno</div>
+        <div id="subtitle">triangulated geodesic sphere &amp; Cassini / Juno maps</div>
          <p>
             <b>Mouse</b> steers (push down &rarr; look down) &bull; inertia drifts back to Jupiter&rsquo;s spin<br>
             <b>P</b> view &bull; <b>V</b> navigation data &bull; <b>G</b> graticule &bull; <b>T</b> look at SUN<br>
@@ -244,13 +267,24 @@
               &nbsp;<span class="k">FOV</span> <span class="v" id="t-fov">75&deg;</span></div>
          <div><span class="k">&odot; SUN</span> <span class="v" id="t-sun">+090.0&deg; / +00.0&deg;</span>
               &nbsp;<span class="k">bearing</span> <span class="v" id="t-sunbrg">&mdash;</span></div>
-     </div>
+        </div>
 
-     <div id="footer">
-         &copy; <a href="https://laurentperrinet.github.io" target="_blank" rel="noopener">laurentperrinet</a> &bull;
-         <a href="LICENSE" target="_blank" rel="noopener">MIT License</a> &bull;
-         imagery <a href="README.md" target="_blank" rel="noopener">NASA / SWRI / floppastrogeo</a>
-     </div>
+         <div id="footer">
+           <!-- The copyleft symbol (🄯), drawn inline so it matches the other HUD marks -->
+           <svg class="copyleft" viewBox="0 0 24 24" role="img" aria-label="Copyleft">
+             <circle cx="12" cy="12" r="10.2" fill="none" stroke="currentColor" stroke-width="1.9"></circle>
+             <g transform="rotate(180 12 12)">
+               <path d="M7.6 8.4h8.8" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"></path>
+               <path d="M12 8.4v7.4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"></path>
+             </g>
+           </svg>
+           Copyleft 2026
+           <a href="https://laurentperrinet.github.io" target="_blank" rel="noopener">Laurent Perrinet</a> &bull;
+           code under
+           <a href="LICENSE" target="_blank" rel="noopener">GNU AGPL-3.0-or-later</a> &bull;
+           <a href="https://github.com/laurentperrinet/retipuj" target="_blank" rel="noopener">Source</a> &bull;
+           imagery <a href="README.md" target="_blank" rel="noopener">NASA / SWRI / floppastrogeo</a>
+         </div>
 
      <div id="center-dot"></div>
      <canvas id="hud"></canvas>
@@ -262,24 +296,21 @@
      <script type="module">
 import * as THREE from 'three';
 
-/* ============================================================================
-   Jupiter from the Inside — configuration
-   ========================================================================== */
+// --- Jupiter from the Inside — configuration ---------------------------------
 
-// --- Geometry of the planetary shell ---------------------------------------
+// --- Geometry of the planetary shell -----------------------------------------
 const SPHERE_RADIUS  = 100;
 const SEG_W          = 128;          // equirectangular shells
 const SEG_H          = 64;
 
-// "Géode par triangulation, à partir d'un icosaèdre dont chaque arête est
-//  divisée en 10" — THREE.IcosahedronGeometry(detail) splits every edge into
-//  (detail + 1) segments, so ν = 10 needs detail = 9.  The parent icosahedron
-//  keeps 12 pentagonal vertices and 30 edges, which are drawn explicitly so
-//  the icosahedral ancestry of the tessellation stays visible.
-//  cf. https://fr.wikipedia.org/wiki/G%C3%A9ode_(g%C3%A9om%C3%A9trie)#G%C3%A9ode_par_triangulation
-const GEODE_EDGES_DIVIDED = 10;                     // ν
-const GEODE_DETAIL        = GEODE_EDGES_DIVIDED - 1; // 9
-const GEODE_FACES         = 20 * GEODE_EDGES_DIVIDED * GEODE_EDGES_DIVIDED; // 2000
+// Triangulated geodesic sphere: an icosahedron whose every edge is divided in
+// ν = 10 (class I). THREE.IcosahedronGeometry(detail) splits each edge into
+// (detail + 1) segments, so ν = 10 needs detail = 9 and the shell gets
+// 20·ν² = 2 000 near-equilateral facets.
+// cf. https://en.wikipedia.org/wiki/Geodesic_polyhedron
+const GEODE_EDGES_DIVIDED = 10;                          // frequency ν
+const GEODE_DETAIL        = GEODE_EDGES_DIVIDED - 1;     // IcosahedronGeometry detail
+const GEODE_FACES         = 20 * GEODE_EDGES_DIVIDED * GEODE_EDGES_DIVIDED;
 
 // Radii, from the observer outward (nearest surface wins the depth test).
 const R_GRATICULE = 0.980 * SPHERE_RADIUS;
@@ -288,50 +319,44 @@ const R_GEODE_MAIN = 0.9915 * SPHERE_RADIUS;
 const R_GEODE_PARENT = 0.9935 * SPHERE_RADIUS;
 const R_SHELL     = 0.999 * SPHERE_RADIUS;
 
-// --- Scientific graticule ---------------------------------------------------
+// --- Scientific graticule ----------------------------------------------------
 const GRID_STEP_DEG   = 15;      // parallels & meridians every 15°
 const LABEL_PX        = 46;      // canvas resolution…
 const LABEL_WORLD_H   = 1.55;    // …turned into small "printed on a map" type
 
-// --- Navigation -------------------------------------------------------------
-const MOUSE_SENSITIVITY = 0.0032;   // was 0.002  (slightly more responsive)
+// --- Navigation --------------------------------------------------------------
+const MOUSE_SENSITIVITY = 0.0032;    // rad/s per pixel of pointer offset
 const DRAG_MULTIPLIER   = 2.1;      // extra authority while a button is held
 const DEAD_ZONE_PX      = 26;
-const KEY_ACCEL         = 3.0;      // rad/s² for H/J/K/L
+const KEY_ACCEL           = 3.0;     // rad/s rate reached with H/J/K/L
 const MAX_SPEED         = 2.8;      // rad/s hard cap (~160°/s)
 const IDLE_TAU          = 3.6;      // s — glide back to the planetary drift
 const DRIFT_AZ_DEG_S    = 0.85;     // °/s prograde drift (Jupiter-like spin feel)
 const ZOOM_SENSITIVITY   = 0.06;
-const ZOOM_RATE_DPS     = 34;          // °/s while S or D is held (slightly quicker)
+const ZOOM_RATE_DPS       = 34;      // °/s while S or D is held
 const FOV_MIN           = 30;
 const FOV_MAX           = 120;
 const FOV_DEFAULT       = 78;
 
-// --- The virtual SUN (cardinal reference) -----------------------------------
+// --- The virtual SUN (cardinal reference) ------------------------------------
 const SUN_AZIMUTH_DEG   = 34;    // cardinal reference: ahead-right of the default view
 const SUN_ELEVATION_DEG = 24;   // …and high enough to light the tessellation like a terminator
 
 const CM = '"Computer Modern", "Latin Modern Roman", "CMU Serif", Georgia, "Times New Roman", serif';
 const SANS = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
 
-// --- Palette (mirrors the CSS custom properties) ----------------------------
+// --- Palette (mirrors the CSS custom properties) -----------------------------
 const PALETTE = {
-  geodesic: { accent: '#00ffaa', strong: '#7dffd4', grid: '#9fd8ff',
-              label: '#eaf6ff', edge: 0x00ffaa, edgeOpacity: 0.34,
-              parent: 0x9dffe0, parentOpacity: 0.95,
-              facet: 0x0e3a33, facetHi: 0x1c6b57 },
-  texture:  { accent: '#10386f', strong: '#0b3d91', grid: '#00bfff',
-              label: '#f4faff', edge: 0x00bfff, edgeOpacity: 0.30,
-              parent: 0x9fe4ff, parentOpacity: 0.8,
-              facet: 0x0d2f5e, facetHi: 0x1d5aa8 }
+  geodesic: { accent: '#00ffaa', grid: '#9fd8ff', label: '#eaf6ff',
+              edge: 0x00ffaa, edgeOpacity: 0.34, parent: 0x9dffe0,
+              parentOpacity: 0.95, facet: 0x0e3a33 },
+  texture:    { accent: '#10386f', grid: '#00bfff', label: '#f4faff' }
 };
 const SUN_CORE = 0xfff8e7;
 const SUN_GLOW = 0xffd27a;
 const LIGHT_SUN = 0xfff1cc;
 
-/* ============================================================================
-   Scene
-   ========================================================================== */
+// --- Scene -------------------------------------------------------------------
 const scene    = new THREE.Scene();
 const camera   = new THREE.PerspectiveCamera(FOV_DEFAULT,
                    window.innerWidth / window.innerHeight, 0.05, 4000);
@@ -344,13 +369,15 @@ renderer.outputColorSpace = THREE.SRGBColorSpace;
 document.body.appendChild(renderer.domElement);
 const MAX_ANISO = renderer.capabilities.getMaxAnisotropy();
 
-const ROOT_ID = '2026-09-27';   // cache-buster: a stale/404 reply is the usual
-function assetURL(u) {           // reason a freshly added map "never appears"
+// Bump when a map file changes: a stale or 404 cached reply is the usual reason
+// a freshly added map "never appears".
+const ASSET_REVISION = '2026-09-27';
+function assetURL(u) {
   if (location.protocol === 'file:') return u;
-  return u + (u.includes('?') ? '&' : '?') + 'v=' + ROOT_ID;
+  return u + (u.includes('?') ? '&' : '?') + 'v=' + ASSET_REVISION;
 }
 
-// --- Lighting: the tessellation is lit by the virtual SUN -------------------
+// --- Lighting: the tessellation is lit by the virtual SUN --------------------
 const ambient = new THREE.AmbientLight(0x11303f, 1.15);
 scene.add(ambient);
 const sunLight = new THREE.DirectionalLight(LIGHT_SUN, 3.1);
@@ -381,17 +408,14 @@ function dirFromAzEl(lam, beta, out) {
 const SUN_DIR = dirFromAzEl(SUN_AZIMUTH_DEG * DEG, SUN_ELEVATION_DEG * DEG).normalize();
 sunLight.position.copy(SUN_DIR).multiplyScalar(300);
 
-/* ============================================================================
-   View modes — one mesh per mode, toggled by .visible so cycling can never
-   "skip" an image (the DeviantArt mix was invisible while it shared a
-   material/mesh with the other maps).
-   ========================================================================== */
+// --- View modes --------------------------------------------------------------
+// One mesh and one material per mode, toggled by .visible, so cycling a view can
+// never "skip" an image.
 const loader = new THREE.TextureLoader();
 
 function loadMap(url, label) {
   const tex = loader.load(assetURL(url),
-    (t) => { t.colorSpace = THREE.SRGBColorSpace; console.info('[maps] ready:', label, url,
-             t.image.width + '×' + t.image.height); },
+    t => { t.colorSpace = THREE.SRGBColorSpace; },
     undefined,
     (e) => { console.error('[maps] FAILED:', url, e);
              reportFailure(label + ' — ' + url); });
@@ -428,26 +452,24 @@ const viewModes = [
   { mesh: cassiniMesh, theme: 'texture',
     name: 'Cassini cylindrical map',
     src: 'NASA/JPL PIA07782 — enhanced colour' },
-  { mesh: geodeMesh, theme: 'geodesic',
-    name: 'Géode par triangulation',
-    src: 'icosahedron, every edge divided in ' + GEODE_EDGES_DIVIDED +
-         ' — ' + GEODE_FACES + ' facets' }
+     { mesh: geodeMesh, theme: 'geodesic',
+      name: 'Triangulated geodesic sphere',
+      src: 'icosahedron, every edge divided in ' + GEODE_EDGES_DIVIDED +
+            ' \u2014 ' + GEODE_FACES + ' facets' }
 ];
-let currentMode = 0;               // ← DeviantArt mix is the default view
+let currentMode = 0;       // the Cassini–Juno mix is the view shown on load
 viewModes.forEach((v, i) => { v.mesh.visible = i === currentMode; scene.add(v.mesh); });
 
 function palette() { return PALETTE[viewModes[currentMode].theme]; }
 
-/* ---------------------------------------------------------------------------
-   Géode par triangulation — frequency ν = 10  (20·ν² = 2000 equilateral-ish
-   triangles), flat-shaded so the sun casts a real relief gradient on the
-   shell, outlined by its edges, with the 30 parent-icosahedron edges and the
-   12 pentagonal vertices picked out so the icosahedral ancestry reads clearly.
-   ========================================================================== */
+// --- Triangulated geodesic sphere --------------------------------------------
+// Flat shading lets the virtual SUN cast a relief gradient on the shell; the 30
+// parent-icosahedron edges and the 12 pentagonal vertices are picked out so the
+// icosahedral ancestry reads clearly.
 function buildGeode() {
   const g = new THREE.Group();
 
-  // — shaded carrier (Lambert + flatShading → per-facet sun relief) —
+    // — shaded carrier (Lambert + flatShading → per-facet sun relief) —
   const carrier = new THREE.IcosahedronGeometry(R_GEODE_MAIN, GEODE_DETAIL);
   const shade = new THREE.Mesh(carrier, new THREE.MeshLambertMaterial({
     color: PALETTE.geodesic.facet, emissive: 0x04141a, emissiveIntensity: 1,
@@ -456,7 +478,7 @@ function buildGeode() {
   shade.renderOrder = 1;
   g.add(shade);
 
-  // — geodesic edges of the frequency-10 triangulation —
+    // — geodesic edges of the frequency-10 triangulation —
   const edges = new THREE.LineSegments(
     new THREE.EdgesGeometry(new THREE.IcosahedronGeometry(R_GEODE_EDGE, GEODE_DETAIL), 1),
     new THREE.LineBasicMaterial({ color: PALETTE.geodesic.edge,
@@ -464,7 +486,7 @@ function buildGeode() {
   edges.renderOrder = 2;
   g.add(edges);
 
-  // — parent icosahedron: 30 great-circle edges + 12 pentagonal vertices —
+    // — parent icosahedron: 30 great-circle edges + 12 pentagonal vertices —
   const parent = new THREE.IcosahedronGeometry(R_GEODE_PARENT, 0);
   const pEdges = new THREE.LineSegments(
     new THREE.EdgesGeometry(parent, 1),
@@ -491,14 +513,13 @@ function buildGeode() {
     g.add(n);
   });
 
-  g.userData = { shade, edges, pEdges, nodes: uniq, carrier };
+  g.userData = { shade };      // applyViewMode() only needs the shaded carrier
   return g;
 }
 
-/* ============================================================================
-   Scientific graticule — latitude / longitude only, every 15°, printed on the
-   shell in Computer Modern at map-annotation size.
-   ========================================================================== */
+// --- Scientific graticule ----------------------------------------------------
+// Latitude / longitude every 15°, printed on the shell in Computer Modern at
+// map-annotation size.
 const gridGroup = new THREE.Group();
 scene.add(gridGroup);
 const labelSprites = [];
@@ -516,7 +537,7 @@ function buildGraticule() {
   labelSprites.length = 0;
   const seg = 220;
 
-  // --- parallels (constant latitude) --------------------------------------
+    // — parallels (constant latitude) —
   for (let lat = -90 + GRID_STEP_DEG; lat <= 90 - GRID_STEP_DEG; lat += GRID_STEP_DEG) {
     const b = lat * DEG, cb = Math.cos(b), sb = Math.sin(b);
     const major = Math.abs(lat) % 45 === 0, equator = lat === 0;
@@ -530,7 +551,7 @@ function buildGraticule() {
     gridGroup.add(line);
   }
 
-  // --- meridians (constant longitude) ------------------------------------
+    // — meridians (constant longitude) —
   for (let lon = 0; lon < 360; lon += GRID_STEP_DEG) {
     const l = lon * DEG;
     const prime = lon === 0 || lon === 180, major = lon % 45 === 0;
@@ -544,7 +565,7 @@ function buildGraticule() {
     gridGroup.add(line);
   }
 
-  // --- degrees labels, 15° steps, map style -------------------------------
+    // — degrees labels, 15° steps, map style —
   const pad = 2.0 * DEG;
   for (let lat = -90 + GRID_STEP_DEG; lat <= 90 - GRID_STEP_DEG; lat += GRID_STEP_DEG) {
     if (lat === 0) continue;                       // the equator stays blank
@@ -601,11 +622,10 @@ function drawTextCanvas(cv, text, ink) {
   return { w, h };
 }
 
-/* ============================================================================
-   Virtual SUN — cardinal reference that is always findable: a lit marker,
-   an always-on-top glyph, an edge chevron when it leaves the frustum, the 'T'
-   slew and a live bearing in the telemetry plate.
-   ========================================================================== */
+// --- Virtual SUN -------------------------------------------------------------
+// A cardinal reference that is always findable: a lit marker, an always-on-top
+// glyph, an edge chevron when it leaves the frustum, the 'T' slew, and a live
+// bearing in the telemetry plate.
 const sunGroup = new THREE.Group();
 scene.add(sunGroup);
 
@@ -668,9 +688,7 @@ const labelPool = [];
   labelPool.push(lab);
 })();
 
-/* ============================================================================
-   Theming / announcements
-   ========================================================================== */
+// --- Theming / announcements -------------------------------------------------
 const el = {
   body: document.getElementById('body'),
   modeLabel: document.getElementById('mode-label'),
@@ -705,7 +723,6 @@ function applyViewMode(quiet) {
   viewModes.forEach((v, i) => (v.mesh.visible = i === currentMode));
   const v = viewModes[currentMode];
   theme = v.theme;
-  el.body.dataset.view = theme;
   el.body.classList.toggle('theme-texture', theme === 'texture');
   // the geodesic tessellation is sun-lit; the maps stay radiometric (unshaded)
   viewModes[2].mesh.userData.shade.visible = theme === 'geodesic';
@@ -721,12 +738,9 @@ function cycleView(dir) {
   applyViewMode(false);
 }
 
-/* ============================================================================
-   Navigation — azimuth λ and elevation β as free-running angles. Both wrap:
-   azimuth at ±180°, elevation continuously over the poles (dir(λ+180°, 180°−β)
-   is the very same line of sight), so the shell is a true torus of motion
-   rather than a window with hard limits.
-   ========================================================================== */
+// --- Navigation --------------------------------------------------------------
+// Azimuth λ and elevation β are free-running angles: λ wraps at ±180°, β keeps
+// turning over the poles, so the shell never has an edge to hit.
 const nav = { lam: 0, beta: 0, olam: 0, obeta: 0, fov: FOV_DEFAULT };
 let lastGoodRight = new THREE.Vector3(1, 0, 0);
 let lastGoodUp = new THREE.Vector3(0, 1, 0);
@@ -779,12 +793,12 @@ function step(dt) {
       if (Math.abs(oy) > DEAD_ZONE_PX) wantBeta = -Math.sign(oy) * (Math.abs(oy) - DEAD_ZONE_PX) * gain;
      }
      // keyboard
-    if (keys.has('KeyL')) wantLam += KEY_ACCEL * 0.5;
-    if (keys.has('KeyH')) wantLam -= KEY_ACCEL * 0.5;
-    if (keys.has('KeyK')) wantBeta += KEY_ACCEL * 0.5;
-    if (keys.has('KeyJ')) wantBeta -= KEY_ACCEL * 0.5;
-    if (keys.has('KeyD')) nav.fov -= ZOOM_RATE_DPS * dt;   // D zooms in
-    if (keys.has('KeyS')) nav.fov += ZOOM_RATE_DPS * dt;     // S zooms out
+    if (keys.has('L')) wantLam += KEY_ACCEL * 0.5;
+    if (keys.has('H')) wantLam -= KEY_ACCEL * 0.5;
+    if (keys.has('K')) wantBeta += KEY_ACCEL * 0.5;
+    if (keys.has('J')) wantBeta -= KEY_ACCEL * 0.5;
+    if (keys.has('D')) nav.fov -= ZOOM_RATE_DPS * dt;
+    if (keys.has('S')) nav.fov += ZOOM_RATE_DPS * dt;
 
     const kSteer = 1 - Math.exp(-dt / 0.34);
     nav.olam += (wantLam - nav.olam) * kSteer;
@@ -813,9 +827,7 @@ function step(dt) {
   updateCameraOrientation();
 }
 
-/* ============================================================================
-   Pointer / wheel / keyboard
-   ========================================================================== */
+// --- Pointer / wheel / keyboard ----------------------------------------------
 addEventListener('pointermove', e => { mouse.x = e.clientX; mouse.y = e.clientY;
   mouse.seen = performance.now(); });
 addEventListener('pointerdown', e => { if (e.target === renderer.domElement) mouse.down = true;
@@ -824,12 +836,11 @@ addEventListener('pointerup', () => (mouse.down = false));
 addEventListener('pointercancel', () => (mouse.down = false));
 addEventListener('wheel', e => { e.preventDefault();
   nav.fov = clamp(nav.fov + Math.sign(e.deltaY) * ZOOM_SENSITIVITY * 12, FOV_MIN, FOV_MAX);
-  	}, { passive: false });
+      }, { passive: false });
 
-/* ============================================================================
-   V mode — navigation data: an instrument-sized velocity vector plus the
-   off-screen SUN chevron, drawn on a full-screen 2D canvas.
-   ========================================================================== */
+// --- V: navigation data ------------------------------------------------------
+// An instrument-sized velocity vector plus the off-screen SUN chevron, drawn
+// on a full-screen 2D canvas.
 let showNav = true;      // V
 let zen = false;         // Z
 
@@ -881,7 +892,7 @@ function drawHud() {
   const cx = innerWidth / 2, cy = innerHeight / 2;
   const minDim = Math.min(innerWidth, innerHeight);
 
-  	// — off-screen SUN chevron —
+    // — off-screen SUN chevron —
   if (sunGroup.visible) {
     if (!dirIsAhead(SUN_DIR)) {
       const p = edgePoint(SUN_DIR);
@@ -906,12 +917,12 @@ function drawHud() {
       hctx.fillStyle = '#ffd27a';
       hctx.fillText(lab, cx + (p.x - cx) + ox * 0.4, p.y + oy * 0.4);
       hctx.restore();
-     	 	}
+              }
   }
 
   if (!showNav) return;
 
-  	// — centre reticle —
+    // — centre reticle —
   hctx.save();
   hctx.strokeStyle = pal.accent; hctx.globalAlpha = 0.5; hctx.lineWidth = 1.2;
   hctx.beginPath(); hctx.arc(cx, cy, 9, 0, TAU); hctx.stroke();
@@ -923,7 +934,7 @@ function drawHud() {
   hctx.stroke();
   hctx.restore();
 
-  	// — velocity vector: look-ahead point → screen —
+    // — velocity vector: look-ahead point → screen —
   const speed = Math.hypot(nav.olam, nav.obeta);          // rad/s
   const degS = speed / DEG;
   let tip = { x: cx, y: cy };
@@ -934,7 +945,7 @@ function drawHud() {
     let dx = p.x - cx, dy = p.y - cy;
     if (!isFinite(dx) || !isFinite(dy) || Math.hypot(dx, dy) < 1) {
       const e = edgePoint(ahead); dx = e.x - cx; dy = e.y - cy;
-     	 	}
+              }
     const n = Math.hypot(dx, dy) || 1;
     const len = 0.11 * minDim + 0.33 * minDim * Math.sqrt(clamp(speed / MAX_SPEED, 0, 1));
     tip = { x: cx + (dx / n) * len, y: cy + (dy / n) * len };
@@ -977,9 +988,7 @@ function drawHud() {
   }
 }
 
-/* ============================================================================
-   Telemetry, key bindings, zen mode
-   ========================================================================== */
+// --- Telemetry, key bindings, zen mode ---------------------------------------
 function fmtDeg(a, w) {                          // signed, zero-padded
   const s = a < 0 ? '−' : '+';
   const v = Math.abs(a).toFixed(1);
@@ -1028,7 +1037,7 @@ function reportFailure(label, url) {
     n = document.createElement('div');
     n.id = 'load-error';
     n.style.cssText = 'position:absolute;bottom:54px;left:50%;transform:translateX(-50%);' +
-       'z-index:20;font:' + '12px ' + SANS + ';padding:8px 14px;border-radius:8px;' +
+       'z-index:20;font:12px ' + SANS + ';padding:8px 14px;border-radius:8px;' +
        'background:rgba(120,20,20,.9);color:#ffd9d9;border:1px solid #ff8080;' +
        'pointer-events:none;max-width:70ch;text-align:center';
     document.body.appendChild(n);
@@ -1037,23 +1046,45 @@ function reportFailure(label, url) {
                     '— check the file next to index.html and hard-reload.';
 }
 
+// --- Hotkeys -----------------------------------------------------------------
+// Match the character printed on the key, not its physical position: e.code is
+// a US-QWERTY layout, so on AZERTY / QWERTZ / Dvorak the key labelled Z would
+// otherwise answer to a completely different letter.
+const HOTKEY = { P: 'view', V: 'nav', G: 'grid', Z: 'zen', T: 'sun', R: 'reset',
+                 F: 'fullscreen', H: 'left', L: 'right', K: 'up', J: 'down',
+                 S: 'zoomOut', D: 'zoomIn' };
+const MOVE_KEYS = new Set(['H', 'L', 'K', 'J', 'S', 'D']);
+
+function keyChars(e) {              // every letter this event can stand for
+  const out = [];
+  const k = (e.key || '').toUpperCase();
+  if (/^[A-Z]$/.test(k)) out.push(k);
+  const m = /^Key([A-Z])$/.exec(e.code || '');
+  if (m && out.indexOf(m[1]) < 0) out.push(m[1]);
+  return out;
+}
+function hotkey(e) {
+  for (const k of keyChars(e)) if (HOTKEY[k]) return HOTKEY[k];
+  return null;
+}
+
 addEventListener('keydown', e => {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
-  const c = e.code;
-  if (['KeyP', 'KeyV', 'KeyG', 'KeyZ', 'KeyF', 'KeyR', 'KeyT', 'KeyH', 'KeyJ',
-        'KeyK', 'KeyL', 'KeyS', 'KeyD'].includes(c)) e.preventDefault();
-  if (c === 'KeyP') { cycleView(e.shiftKey ? -1 : 1); return; }
-  if (c === 'KeyV') { showNav = !showNav; el.telemetry.style.display = showNav ? '' : 'none';
-     					if (!showNav) hctx.clearRect(0, 0, innerWidth, innerHeight); return; }
-  if (c === 'KeyG') { setGrid(!showGrid); return; }
-  if (c === 'KeyZ') { setZen(!zen); return; }
-  if (c === 'KeyT') { slewTo(SUN_AZIMUTH_DEG * DEG, SUN_ELEVATION_DEG * DEG, 1.2); return; }
-  if (c === 'KeyR') { slewTo(0, 0, 0.9); nav.fov = FOV_DEFAULT; return; }
-  if (c === 'KeyF') { if (document.fullscreenElement) document.exitFullscreen();
-     					else document.documentElement.requestFullscreen(); return; }
-  keys.add(c);
+  const k = hotkey(e);
+  if (!k) return;
+  e.preventDefault();
+  if (k === 'view') { cycleView(e.shiftKey ? -1 : 1); return; }
+  if (k === 'nav') { showNav = !showNav; el.telemetry.style.display = showNav ? '' : 'none';
+    if (!showNav) hctx.clearRect(0, 0, innerWidth, innerHeight); return; }
+  if (k === 'grid') { setGrid(!showGrid); return; }
+  if (k === 'zen') { setZen(!zen); return; }
+  if (k === 'sun') { slewTo(SUN_AZIMUTH_DEG * DEG, SUN_ELEVATION_DEG * DEG, 1.2); return; }
+  if (k === 'reset') { slewTo(0, 0, 0.9); nav.fov = FOV_DEFAULT; return; }
+  if (k === 'fullscreen') { if (document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen(); return; }
+  for (const c of keyChars(e)) if (MOVE_KEYS.has(c)) keys.add(c);
 }, { passive: false });
-addEventListener('keyup', e => keys.delete(e.code));
+addEventListener('keyup', e => { for (const c of keyChars(e)) keys.delete(c); });
 addEventListener('blur', () => { keys.clear(); mouse.down = false; });
 
 addEventListener('resize', () => {
@@ -1063,9 +1094,7 @@ addEventListener('resize', () => {
   resizeHud();
 });
 
-/* ============================================================================
-   Fonts: annotations are drawn once the serif is really available
-   ========================================================================== */
+// --- Fonts: annotations are drawn once the serif is really available ---------
 function fontsReady() {
   if (!document.fonts) return Promise.resolve(false);
   const tries = ['400 46px "Computer Modern"', '700 46px "Computer Modern"',
@@ -1099,9 +1128,7 @@ function requestLabelRedraw() {
   requestAnimationFrame(() => { redrawPending = false; redrawLabels(); });
 }
 
-/* ============================================================================
-   Main loop
-   ========================================================================== */
+// --- Main loop ---------------------------------------------------------------
 let prev = performance.now();
 function frame(now) {
   requestAnimationFrame(frame);
@@ -1125,7 +1152,6 @@ gridGroup.visible = showGrid;
 el.telemetry.style.display = showNav ? '' : 'none';
 fontsReady().then(ok => {
   requestLabelRedraw();
-  console.info('[fonts] Computer Modern available:', ok);
   announce('Jupiter from the Inside', viewModes[0].name + ' — ' + viewModes[0].src);
 });
 resizeHud();
