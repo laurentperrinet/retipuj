@@ -70,6 +70,9 @@
             --plate-border: rgba(0,255,170,0.22);
             --grid: #9fd8ff;
             --grid-label: #eaf6ff;
+            --ctl-hover: rgba(0,255,170,0.13);
+            --ctl-on-bg: rgba(0,255,170,0.22);
+            --ctl-on-ink: #d9fff3;
         }
         body.theme-texture {
             --accent: #10386f;
@@ -79,6 +82,9 @@
             --plate-border: rgba(11,61,145,0.45);
             --grid: #00bfff;
             --grid-label: #f4faff;
+            --ctl-hover: rgba(16,56,111,0.12);
+            --ctl-on-bg: #10386f;
+            --ctl-on-ink: #eaf3ff;
         }
 
          /* --- UI plate ---------------------------------------------------- */
@@ -232,6 +238,79 @@
             z-index: 5;
             transition: opacity .3s ease, background .6s ease;
         }
+         /* --- Control bar: physical buttons for the keystrokes --------------
+              Same instrument language as the plates. The motion keys (H J K L)
+              are deliberately absent — the pointer *is* the motion controller —
+              and in Zen mode only the Z button is left on screen. */
+         #controls {
+             position: absolute;
+             bottom: 20px;
+             right: 26px;
+             z-index: 16;
+             display: flex;
+             align-items: stretch;
+             flex-wrap: wrap;
+             justify-content: flex-end;
+             gap: 8px;
+             padding: 7px 9px;
+             max-width: calc(100vw - 52px);
+             background: var(--plate);
+             border: 1px solid var(--plate-border);
+             border-radius: 10px;
+             backdrop-filter: blur(6px) saturate(1.1);
+              -webkit-backdrop-filter: blur(6px) saturate(1.1);
+             box-shadow: 0 0 26px rgba(0,0,0,0.35);
+             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+             user-select: none;
+             transition: opacity .5s ease, background .6s ease, border-color .6s ease;
+           }
+         #controls .grp { display: flex; gap: 5px; }
+         #controls .sep { width: 1px; align-self: stretch; background: var(--plate-border); margin: 2px 0; }
+         button.ctl {
+             appearance: none; -webkit-appearance: none;
+             display: flex; flex-direction: column; align-items: center; gap: 3px;
+             min-width: 62px;
+             padding: 5px 7px 6px;
+             background: transparent;
+             color: var(--accent);
+             border: 1px solid transparent;
+             border-radius: 8px;
+             cursor: pointer;
+             font: inherit;
+             transition: background .18s ease, border-color .18s ease,
+                         color .18s ease, opacity .4s ease;
+           }
+         button.ctl:hover { background: var(--ctl-hover); border-color: var(--plate-border); }
+         button.ctl:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }
+         button.ctl.on { background: var(--ctl-on-bg); color: var(--ctl-on-ink);
+                         border-color: var(--accent); }
+         button.ctl kbd {
+             font-family: 'Computer Modern', 'Latin Modern Roman', Georgia, serif;
+             font-weight: 700; font-size: 15px; line-height: 1;
+             padding: 2px 7px 3px;
+             border: 1px solid var(--plate-border);
+             border-radius: 5px;
+             background: var(--ctl-hover);
+             transition: transform .12s ease;
+           }
+         button.ctl .lbl {
+             font-family: 'Inter', sans-serif;
+             font-size: 9px; letter-spacing: .7px; text-transform: uppercase; opacity: .78;
+           }
+         button.ctl:active kbd { transform: translateY(1px); }
+         @media (max-width: 1024px) { #footer { display: none; } }
+
+         /* --- Zen mode -----------------------------------------------------
+              Only the vista — plus the one button that brings the instruments back.
+              The pointer keeps steering: zen hides the HUD, it never pauses motion. */
+         body.zen-mode #controls { background: transparent; border-color: transparent;
+                                   box-shadow: none; backdrop-filter: none;
+                                     -webkit-backdrop-filter: none; padding: 0; }
+         body.zen-mode #controls .sep { display: none; }
+         body.zen-mode #controls button.ctl:not(.zen) { display: none; }
+         body.zen-mode #controls button.ctl.zen { cursor: pointer !important; opacity: .26; }
+         body.zen-mode #controls button.ctl.zen:hover { opacity: 1; background: var(--ctl-hover); }
+
          .copyleft {
             width: 13px;
             height: 13px;
@@ -251,7 +330,9 @@
          <p>
             <b>Mouse</b> steers (push down &rarr; look down) &bull; inertia drifts back to Jupiter&rsquo;s spin<br>
             <b>P</b> view &bull; <b>V</b> navigation data &bull; <b>G</b> graticule &bull; <b>T</b> look at SUN<br>
-            <b>H J K L</b> motion &bull; <b>S D</b> / wheel zoom &bull; <b>R</b> reset &bull; <b>F</b> fullscreen &bull; <b>Z</b> zen
+            <b>H J K L</b> motion &bull; <b>S D</b> / wheel zoom &bull; <b>R</b> reset &bull; <b>F</b> fullscreen &bull; <b>Z</b> zen<br>
+            <b>H J K L</b> motion has no button &mdash; the pointer steers. Every key above
+             answers to the instrument bar at the bottom right &rsaquo;
          </p>
          <div id="mode-label">&mdash;</div>
          <div id="credit">&mdash;</div>
@@ -260,13 +341,15 @@
      <div id="mode-announce"><div class="name"></div><div class="src"></div></div>
 
      <div id="telemetry">
-         <div class="head">Navigation data</div>
-         <div><span class="k">&lambda; azimuth</span> <span class="v" id="t-lam">+000.0&deg;</span>
-              &nbsp;<span class="k">&beta; elevation</span> <span class="v" id="t-beta">+00.0&deg;</span></div>
-         <div><span class="k">&omega; rate</span> <span class="v" id="t-omega">0.00&deg;/s</span>
-              &nbsp;<span class="k">FOV</span> <span class="v" id="t-fov">75&deg;</span></div>
-         <div><span class="k">&odot; SUN</span> <span class="v" id="t-sun">+090.0&deg; / +00.0&deg;</span>
-              &nbsp;<span class="k">bearing</span> <span class="v" id="t-sunbrg">&mdash;</span></div>
+       <div class="head">Navigation data</div>
+       <div><span class="k">&lambda; azimuth</span> <span class="v" id="t-lam">+000.0&deg;</span>
+        &nbsp;<span class="k">&beta; elevation</span> <span class="v" id="t-beta">+00.0&deg;</span></div>
+       <div><span class="k">|&omega;| rate</span> <span class="v" id="t-omega">0.00&deg;/s</span>
+        &nbsp;<span class="k">FOV</span> <span class="v" id="t-fov">75&deg;</span></div>
+       <div><span class="k">&lambda;&#775; azimuth</span> <span class="v" id="t-olam">+00.00&deg;/s</span>
+        &nbsp;<span class="k">&beta;&#775; elevation</span> <span class="v" id="t-obeta">+00.00&deg;/s</span></div>
+       <div><span class="k">&odot; SUN</span> <span class="v" id="t-sun">+090.0&deg; / +00.0&deg;</span>
+        &nbsp;<span class="k">bearing</span> <span class="v" id="t-sunbrg">&mdash;</span></div>
         </div>
 
          <div id="footer">
@@ -285,6 +368,45 @@
            <a href="https://github.com/laurentperrinet/retipuj" target="_blank" rel="noopener">Source</a> &bull;
            imagery <a href="README.md" target="_blank" rel="noopener">NASA / SWRI / floppastrogeo</a>
          </div>
+
+      <!-- Physical buttons for every keystroke except the pointer-driven motion -->
+      <div id="controls" role="toolbar" aria-label="Instrument controls">
+        <div class="grp">
+          <button class="ctl" data-act="view" aria-label="Cycle view"
+                  title="P — cycle the shell view (Shift-click steps backwards)">
+            <kbd>P</kbd><span class="lbl">View</span></button>
+          <button class="ctl" data-act="nav" aria-pressed="true" aria-label="Toggle navigation data"
+                  title="V — navigation data: velocity vector &amp; telemetry plate">
+            <kbd>V</kbd><span class="lbl">Nav data</span></button>
+          <button class="ctl" data-act="grid" aria-pressed="true" aria-label="Toggle graticule"
+                  title="G — scientific graticule, 15&deg; steps">
+            <kbd>G</kbd><span class="lbl">Grid</span></button>
+          <button class="ctl" data-act="sun" aria-label="Slew onto the SUN"
+                  title="T — look at the virtual SUN">
+            <kbd>T</kbd><span class="lbl">Find SUN</span></button>
+        </div>
+        <div class="sep"></div>
+        <div class="grp">
+          <button class="ctl" data-act="zoomOut" aria-label="Zoom out"
+                  title="S — widen the field of view (hold to keep zooming)">
+            <kbd>S</kbd><span class="lbl">Wider</span></button>
+          <button class="ctl" data-act="zoomIn" aria-label="Zoom in"
+                  title="D — narrow the field of view (hold to keep zooming)">
+            <kbd>D</kbd><span class="lbl">Tighter</span></button>
+        </div>
+        <div class="sep"></div>
+        <div class="grp">
+          <button class="ctl" data-act="reset" aria-label="Reset the view"
+                  title="R — eased return to &lambda; 0&deg;, &beta; 0&deg;, FOV 78&deg;">
+            <kbd>R</kbd><span class="lbl">Reset</span></button>
+          <button class="ctl" data-act="fullscreen" aria-label="Toggle fullscreen"
+                  title="F — fullscreen">
+            <kbd>F</kbd><span class="lbl">Fullscreen</span></button>
+          <button class="ctl zen" data-act="zen" aria-pressed="false" aria-label="Toggle zen mode"
+                  title="Z — full zen mode: every instrument off, the vista only">
+            <kbd>Z</kbd><span class="lbl">Zen</span></button>
+        </div>
+      </div>
 
      <div id="center-dot"></div>
      <canvas id="hud"></canvas>
@@ -334,6 +456,7 @@ const IDLE_TAU          = 3.6;      // s — glide back to the planetary drift
 const DRIFT_AZ_DEG_S    = 0.85;     // °/s prograde drift (Jupiter-like spin feel)
 const ZOOM_SENSITIVITY   = 0.06;
 const ZOOM_RATE_DPS       = 34;      // °/s while S or D is held
+const ZOOM_STEP_DEG    = 6;          // ° per click of the Wider / Tighter button
 const FOV_MIN           = 30;
 const FOV_MAX           = 120;
 const FOV_DEFAULT       = 78;
@@ -348,9 +471,11 @@ const SANS = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sa
 // --- Palette (mirrors the CSS custom properties) -----------------------------
 const PALETTE = {
   geodesic: { accent: '#00ffaa', grid: '#9fd8ff', label: '#eaf6ff',
+              vecInk: '#d9fff3', vecHalo: 'rgba(2,8,16,.80)',
               edge: 0x00ffaa, edgeOpacity: 0.34, parent: 0x9dffe0,
               parentOpacity: 0.95, facet: 0x0e3a33 },
-  texture:    { accent: '#10386f', grid: '#00bfff', label: '#f4faff' }
+  texture:     { accent: '#10386f', grid: '#00bfff', label: '#f4faff',
+                 vecInk: '#f8fcff', vecHalo: 'rgba(4,16,40,.72)' }
 };
 const SUN_CORE = 0xfff8e7;
 const SUN_GLOW = 0xffd27a;
@@ -703,6 +828,8 @@ const el = {
   footer: document.getElementById('footer'),
   tLam: document.getElementById('t-lam'),
   tBeta: document.getElementById('t-beta'),
+  tOLam: document.getElementById('t-olam'),
+  tOBeta: document.getElementById('t-obeta'),
   tOmega: document.getElementById('t-omega'),
   tFov: document.getElementById('t-fov'),
   tSun: document.getElementById('t-sun'),
@@ -759,7 +886,7 @@ function updateCameraOrientation() {
   camera.quaternion.setFromRotationMatrix(_m);
 }
 
-const mouse = { x: 0, y: 0, down: false, seen: -1e9 };
+const mouse = { x: 0, y: 0, down: false, seen: -1e9, overUI: false };
 function steerRate(offsetPx) {
   const a = Math.abs(offsetPx);
   if (a <= DEAD_ZONE_PX) return 0;
@@ -783,9 +910,11 @@ function step(dt) {
     nav.olam = nav.obeta = 0;
     if (slew.t >= slew.dur) slew = null;
   } else {
-    // pointer steering: right → look right, DOWN → look DOWN (natural)
+    // pointer steering: right → look right, DOWN → look DOWN (natural).
+    // Zen mode does not pause it — the vista stays alive under the pointer;
+    // only hovering the instrument bar parks the pointer.
     let wantLam = 0, wantBeta = 0;
-    if (!zen && performance.now() - mouse.seen < 700) {
+    if (!mouse.overUI && performance.now() - mouse.seen < 700) {
       const gain = MOUSE_SENSITIVITY * (mouse.down ? DRAG_MULTIPLIER : 1);
       const ox = mouse.x - window.innerWidth / 2;
       const oy = mouse.y - window.innerHeight / 2;
@@ -797,8 +926,9 @@ function step(dt) {
     if (keys.has('H')) wantLam -= KEY_ACCEL * 0.5;
     if (keys.has('K')) wantBeta += KEY_ACCEL * 0.5;
     if (keys.has('J')) wantBeta -= KEY_ACCEL * 0.5;
-    if (keys.has('D')) nav.fov -= ZOOM_RATE_DPS * dt;
-    if (keys.has('S')) nav.fov += ZOOM_RATE_DPS * dt;
+    // zoom: D / S on the keyboard, or the Wider / Tighter button held down
+    const zoomInput = uiZoom + (keys.has('D') ? -1 : 0) + (keys.has('S') ? 1 : 0);
+    if (zoomInput) nav.fov += zoomInput * ZOOM_RATE_DPS * dt;
 
     const kSteer = 1 - Math.exp(-dt / 0.34);
     nav.olam += (wantLam - nav.olam) * kSteer;
@@ -841,8 +971,15 @@ addEventListener('wheel', e => { e.preventDefault();
 // --- V: navigation data ------------------------------------------------------
 // An instrument-sized velocity vector plus the off-screen SUN chevron, drawn
 // on a full-screen 2D canvas.
-let showNav = true;      // V
-let zen = false;         // Z
+let showNav = true;       // V
+let zen = false;          // Z
+
+function setNav(on) {                          // V — velocity vector + telemetry
+  showNav = on;
+  el.telemetry.style.display = on ? '' : 'none';
+  if (!on) hctx.clearRect(0, 0, innerWidth, innerHeight);
+  refreshControls();
+}
 
 function resizeHud() {
   const dpr = Math.min(devicePixelRatio || 1, 2);
@@ -969,21 +1106,15 @@ function drawHud() {
     hctx.lineTo(-head * 0.24, 0); hctx.lineTo(-head * 0.5, head * 0.42);
     hctx.closePath(); hctx.fill();
     hctx.shadowBlur = 0;
-    hctx.fillStyle = 'rgba(2,8,16,.85)';
-    hctx.font = '700 ' + Math.round(minDim * 0.024) + 'px ' + CM;
+    // the arrow carries the norm only — |ω| on the shaft. The λ̇ / β̇ components
+    // live in the telemetry plate, which keeps the instrument legible in a turn
+    hctx.font = '700 ' + Math.round(minDim * 0.026) + 'px ' + CM;
     hctx.textAlign = 'center'; hctx.textBaseline = 'middle';
-    hctx.fillText('ω ' + degS.toFixed(2) + '°/s', -head * 0.1, -head * 0.78);
-    hctx.restore();
-
-    hctx.save();                          // per-component read-out
-    hctx.font = Math.round(minDim * 0.016) + 'px ' + CM;
-    hctx.textAlign = tip.x > cx ? 'right' : 'left';
-    hctx.fillStyle = pal.accent;
-    hctx.strokeStyle = 'rgba(2,8,16,.7)'; hctx.lineWidth = 3; hctx.lineJoin = 'round';
-    const t = 'λ̇ ' + (nav.olam / DEG).toFixed(2) + '°/s   β̇ ' +
-               (nav.obeta / DEG).toFixed(2) + '°/s';
-    hctx.strokeText(t, tip.x, tip.y + minDim * 0.045);
-    hctx.fillText(t, tip.x, tip.y + minDim * 0.045);
+    hctx.lineWidth = 4; hctx.lineJoin = 'round';
+    hctx.strokeStyle = pal.vecHalo;
+    hctx.strokeText('ω ' + degS.toFixed(2) + '°/s', -head * 0.1, -head * 0.84);
+    hctx.fillStyle = pal.vecInk;
+    hctx.fillText('ω ' + degS.toFixed(2) + '°/s', -head * 0.1, -head * 0.84);
     hctx.restore();
   }
 }
@@ -994,6 +1125,11 @@ function fmtDeg(a, w) {                          // signed, zero-padded
   const v = Math.abs(a).toFixed(1);
   return s + (v.length < w ? '0'.repeat(w - v.length) + v : v) + '°';
 }
+function fmtRate(radS) {                       // signed °/s, two decimals
+  const dps = radS / DEG;
+  return (dps < 0 ? '−' : '+') + Math.abs(dps).toFixed(2) + '°/s';
+}
+
 let lastTelemetry = 0;
 function updateTelemetry(now) {
   if (zen || !showNav) return;
@@ -1005,6 +1141,8 @@ function updateTelemetry(now) {
   el.tLam.textContent = fmtDeg(wrapPi(nav.lam) / DEG, 3);
   el.tBeta.textContent = fmtDeg(betaShown, 2);
   el.tOmega.textContent = (Math.hypot(nav.olam, nav.obeta) / DEG).toFixed(2) + '°/s';
+  el.tOLam.textContent = fmtRate(nav.olam);
+  el.tOBeta.textContent = fmtRate(nav.obeta);
   el.tFov.textContent = nav.fov.toFixed(0) + '°';
   el.tSun.textContent = fmtDeg(SUN_AZIMUTH_DEG, 3) + ' / ' + fmtDeg(SUN_ELEVATION_DEG, 2);
   const sep = Math.acos(clamp(dirFromAzEl(nav.lam, nav.beta, new THREE.Vector3())
@@ -1016,20 +1154,72 @@ function updateTelemetry(now) {
 function setZen(on) {
   zen = on;
   el.body.classList.toggle('zen-mode', on);
+  mouse.down = false;
   [el.ui, el.footer, el.telemetry, el.dot, el.hud].forEach(n =>
     n.classList.toggle('hidden', on));
   gridGroup.visible = !on && showGrid;
   sunGroup.visible = !on;
   if (on) hctx.clearRect(0, 0, innerWidth, innerHeight);
+  refreshControls();
   announce(on ? 'Zen mode' : 'Instrument on',
-    on ? 'all digital noise removed' : viewModes[currentMode].name);
+           on ? 'all digital noise removed — the pointer still steers'
+         : viewModes[currentMode].name);
 }
 
-let showGrid = true;                              // G
+let showGrid = true;                               // G
 function setGrid(on) {
   showGrid = on;
   gridGroup.visible = on && !zen;
+  refreshControls();
 }
+
+// --- Instrument bar: the physical twins of the keystrokes -----------------
+// No buttons for H J K L — the pointer is the motion controller. In zen mode
+// the Z button is the only one left visible, so the HUD always comes back.
+const controls = document.getElementById('controls');
+const ctlButtons = Array.from(controls.querySelectorAll('button.ctl'));
+let uiZoom = 0;            // −1 tighter, +1 wider: Wider / Tighter held down
+let uiZoomFrom = 0;        // when the current zoom press started
+
+function refreshControls() {
+  const state = { nav: showNav, grid: showGrid, zen: zen };
+  ctlButtons.forEach(b => {
+    const a = b.dataset.act;
+    if (!(a in state)) return;
+    b.classList.toggle('on', state[a]);
+    b.setAttribute('aria-pressed', String(state[a]));
+    });
+}
+
+function doAction(act, e) {
+  if (act === 'view') { cycleView(e && e.shiftKey ? -1 : 1); return; }
+  if (act === 'nav') { setNav(!showNav); return; }
+  if (act === 'grid') { setGrid(!showGrid); return; }
+  if (act === 'sun') { slewTo(SUN_AZIMUTH_DEG * DEG, SUN_ELEVATION_DEG * DEG, 1.2); return; }
+  if (act === 'reset') { slewTo(0, 0, 0.9); nav.fov = FOV_DEFAULT; return; }
+  if (act === 'fullscreen') { if (document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen(); return; }
+  if (act === 'zen') { setZen(!zen); return; }
+}
+
+// hovering the bar parks the pointer: pressing a button must never whip the camera
+controls.addEventListener('pointerenter', () => { mouse.overUI = true; });
+controls.addEventListener('pointerleave', () => { mouse.overUI = false; uiZoom = 0; });
+ctlButtons.forEach(b => {
+  const act = b.dataset.act;
+  const zoomDir = act === 'zoomIn' ? -1 : act === 'zoomOut' ? 1 : 0;
+  b.addEventListener('pointerdown', () => {
+    mouse.overUI = true;
+    uiZoom = zoomDir; uiZoomFrom = performance.now();
+    });
+  b.addEventListener('pointerup', () => {
+    if (zoomDir && performance.now() - uiZoomFrom < 220)      // a click, not a hold
+      nav.fov = clamp(nav.fov + zoomDir * ZOOM_STEP_DEG, FOV_MIN, FOV_MAX);
+    uiZoom = 0;
+    });
+  b.addEventListener('click', e => { if (!zoomDir) doAction(act, e); });
+});
+addEventListener('pointerup', () => (uiZoom = 0));
 
 function reportFailure(label, url) {
   let n = document.getElementById('load-error');
@@ -1074,8 +1264,7 @@ addEventListener('keydown', e => {
   if (!k) return;
   e.preventDefault();
   if (k === 'view') { cycleView(e.shiftKey ? -1 : 1); return; }
-  if (k === 'nav') { showNav = !showNav; el.telemetry.style.display = showNav ? '' : 'none';
-    if (!showNav) hctx.clearRect(0, 0, innerWidth, innerHeight); return; }
+  if (k === 'nav') { setNav(!showNav); return; }
   if (k === 'grid') { setGrid(!showGrid); return; }
   if (k === 'zen') { setZen(!zen); return; }
   if (k === 'sun') { slewTo(SUN_AZIMUTH_DEG * DEG, SUN_ELEVATION_DEG * DEG, 1.2); return; }
@@ -1085,7 +1274,7 @@ addEventListener('keydown', e => {
   for (const c of keyChars(e)) if (MOVE_KEYS.has(c)) keys.add(c);
 }, { passive: false });
 addEventListener('keyup', e => { for (const c of keyChars(e)) keys.delete(c); });
-addEventListener('blur', () => { keys.clear(); mouse.down = false; });
+addEventListener('blur', () => { keys.clear(); mouse.down = false; uiZoom = 0; });
 
 addEventListener('resize', () => {
   camera.aspect = innerWidth / innerHeight;
@@ -1150,6 +1339,7 @@ buildGraticule();
 applyViewMode(true);
 gridGroup.visible = showGrid;
 el.telemetry.style.display = showNav ? '' : 'none';
+refreshControls();
 fontsReady().then(ok => {
   requestLabelRedraw();
   announce('Jupiter from the Inside', viewModes[0].name + ' — ' + viewModes[0].src);
