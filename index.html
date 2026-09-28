@@ -216,6 +216,43 @@
         body.theme-texture #footer { text-shadow: 0 1px 6px rgba(255,255,255,.8); }
         #footer a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; }
         #footer a:hover { border-bottom-color: var(--accent); }
+          /* --- GitHub badge: the door to the source code ---------------------
+              Same plate language as the other instruments, mirrored top-right so
+              it never competes with the title plate. Ink follows the theme:
+              matrix green over the geodesic, atlas blue over Jupiter's maps. */
+         #github {
+             position: absolute;
+             top: 26px;
+             right: 26px;
+             z-index: 16;
+             display: flex;
+             align-items: center;
+             gap: 8px;
+             padding: 8px 11px;
+             color: var(--accent);
+             background: var(--plate);
+             border: 1px solid var(--plate-border);
+             border-radius: 10px;
+             backdrop-filter: blur(6px) saturate(1.1);
+               -webkit-backdrop-filter: blur(6px) saturate(1.1);
+             box-shadow: 0 0 26px rgba(0,0,0,0.35);
+             text-decoration: none;
+             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+             user-select: none;
+             transition: color .6s ease, background .6s ease, border-color .6s ease,
+                         transform .18s ease, box-shadow .18s ease;
+         }
+        body.theme-texture #github { box-shadow: 0 6px 26px rgba(4,20,48,.35); }
+         #github:hover { transform: translateY(-1px); border-color: var(--accent);
+                         background: var(--ctl-hover); }
+         #github:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }
+         #github svg { width: 17px; height: 17px; flex: 0 0 auto; fill: currentColor; }
+         #github .repo {
+             font-size: 9px; letter-spacing: .7px; text-transform: uppercase; opacity: .78;
+             white-space: nowrap;
+         }
+        @media (max-width: 1024px) { #github .repo { display: none; } #github { padding: 8px; } }
+
 
          /* --- V: navigation-data overlay (full-screen canvas) ------------- */
          #hud {
@@ -368,6 +405,17 @@
            <a href="https://github.com/laurentperrinet/retipuj" target="_blank" rel="noopener">Source</a> &bull;
            imagery <a href="README.md" target="_blank" rel="noopener">NASA / SWRI / floppastrogeo</a>
          </div>
+
+       <!-- GitHub mark (Octicons, MIT) — the door to the source repository -->
+       <a id="github" href="https://github.com/laurentperrinet/retipuj"
+          target="_blank" rel="noopener"
+          aria-label="Source code on GitHub: laurentperrinet/retipuj"
+          title="Source code — laurentperrinet/retipuj (GNU AGPL-3.0-or-later)">
+         <svg viewBox="0 0 16 16" role="img" aria-hidden="true" focusable="false">
+           <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.66-.19-3.38-.83-3.38-3.69 0-.82.29-1.48.77-2.01-.07-.19-.34-.96.07-2 0 0 .62-.2 2.03.76a7 7 0 0 1 3.7 0c1.41-.96 2.03-.76 2.03-.76.41 1.04.14 1.81.07 2 .48.53.77 1.19.77 2.01 0 2.87-1.73 3.5-3.39 3.69.53.55 1 1.44 1 2.91 0 2.11-.01 3.81-.01 4.33 0 .21.15.46.55.38A7.995 7.995 0 0 0 16 8c0-4.42-3.58-8-8-8Z"></path>
+         </svg>
+         <span class="repo">Source on GitHub</span>
+       </a>
 
       <!-- Physical buttons for every keystroke except the pointer-driven motion -->
       <div id="controls" role="toolbar" aria-label="Instrument controls">
@@ -826,6 +874,7 @@ const el = {
   hud: document.getElementById('hud'),
   ui: document.getElementById('ui'),
   footer: document.getElementById('footer'),
+  github: document.getElementById('github'),
   tLam: document.getElementById('t-lam'),
   tBeta: document.getElementById('t-beta'),
   tOLam: document.getElementById('t-olam'),
@@ -1155,7 +1204,7 @@ function setZen(on) {
   zen = on;
   el.body.classList.toggle('zen-mode', on);
   mouse.down = false;
-  [el.ui, el.footer, el.telemetry, el.dot, el.hud].forEach(n =>
+  [el.ui, el.footer, el.github, el.telemetry, el.dot, el.hud].forEach(n =>
     n.classList.toggle('hidden', on));
   gridGroup.visible = !on && showGrid;
   sunGroup.visible = !on;
