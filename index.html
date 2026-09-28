@@ -53,7 +53,7 @@
             font-display: swap;
          }
 
-         :root { color-scheme: dark; }
+         :root { color-scheme: dark; --header-h: 30px; }
         body { margin: 0; overflow: hidden; background-color: #000; }
         canvas { display: block; }
 
@@ -90,7 +90,7 @@
          /* --- UI plate ---------------------------------------------------- */
         #ui {
             position: absolute;
-            top: 26px;
+            top: calc(var(--header-h) + 14px);
             left: 26px;
             max-width: 40ch;
             color: var(--accent);
@@ -197,41 +197,48 @@
             text-transform: uppercase;
         }
 
-         /* --- Footer ------------------------------------------------------ */
-        #footer {
+           /* --- Header ------------------------------------------------------
+              The attribution line — copyleft, licence, source, imagery provenance —
+              used to live in a footer, where the instrument bar kept bumping into
+              it. It now runs across the top of the vista, on its own row above the
+              plates, so nothing overlaps. The text is click-through, so the pointer
+              still steers the shell over it; the anchors opt back in. */
+          #header {
             position: absolute;
-            bottom: 18px;
-            width: 100%;
+            top: 0;
+            left: 0;
+            right: 0;
+            min-height: var(--header-h);
+            box-sizing: border-box;
+            padding: 7px 26px 6px;
             text-align: center;
             color: var(--accent);
             font-family: 'Computer Modern', Georgia, serif;
             font-size: 12px;
             letter-spacing: .6px;
             opacity: .62;
-            transition: color .6s ease, opacity .5s ease;
-            z-index: 10;
+            z-index: 15;
             pointer-events: none;
+            user-select: none;
             text-shadow: 0 1px 6px rgba(0,0,0,.8);
-        }
-        body.theme-texture #footer { text-shadow: 0 1px 6px rgba(255,255,255,.8); }
-          /* The footer plate is click-through — pointer-events:none on #footer lets the
-             pointer steer the shell even over the credits — which is also what made its
-             links unclickable. The anchors opt back in, with a real cursor, a wider hit
-             area, and a keyboard focus ring. */
-          #footer a { color: var(--accent); text-decoration: none;
+            transition: color .6s ease, opacity .5s ease;
+          }
+        body.theme-texture #header { text-shadow: 0 1px 6px rgba(255,255,255,.8); }
+          #header a { color: var(--accent); text-decoration: none;
                       border-bottom: 1px solid transparent;
                       pointer-events: auto; cursor: pointer;
                       padding: 3px 2px 1px; border-radius: 3px; }
-          #footer a:hover, #footer a:focus-visible { border-bottom-color: var(--accent);
+          #header a:hover, #header a:focus-visible { border-bottom-color: var(--accent);
                                                      opacity: 1; }
-          #footer a:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }
-/* --- GitHub badge: the door to the source code ---------------------
+          #header a:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }
+
+          /* --- GitHub badge: the door to the source code ---------------------
               Same plate language as the other instruments, mirrored top-right so
               it never competes with the title plate. Ink follows the theme:
               matrix green over the geodesic, atlas blue over Jupiter's maps. */
          #github {
              position: absolute;
-             top: 26px;
+             top: calc(var(--header-h) + 14px);
              right: 26px;
              z-index: 16;
              display: flex;
@@ -284,10 +291,11 @@
             z-index: 5;
             transition: opacity .3s ease, background .6s ease;
         }
-         /* --- Control bar: physical buttons for the keystrokes --------------
-              Same instrument language as the plates. The motion keys (H J K L)
-              are deliberately absent — the pointer *is* the motion controller —
-              and in Zen mode only the Z button is left on screen. */
+          /* --- Control bar: physical buttons for the keystrokes --------------
+              Same instrument language as the plates: every keystroke has its twin
+              here, motion (H J K L) included. The motion pad is a second hand on
+              the same wheel as the pointer — same rates, same inertia — and in Zen
+              mode only the Z button is left on screen. */
          #controls {
              position: absolute;
              bottom: 20px;
@@ -344,7 +352,17 @@
              font-size: 9px; letter-spacing: .7px; text-transform: uppercase; opacity: .78;
            }
          button.ctl:active kbd { transform: translateY(1px); }
-         @media (max-width: 1024px) { #footer { display: none; } }
+           /* Motion twins of H J K L: press and hold to turn, release and the shell
+             glides back to the planetary drift — the same physics as the keystroke. */
+         button.ctl.move { min-width: 58px; }
+         button.ctl.move .lbl { letter-spacing: .4px; }
+           /* The attribution line stays on one row: it shrinks before it can wrap
+             onto the plates, and on very narrow screens it steps out and hands its
+             reserved space back to the plates. */
+           @media (max-width: 1180px) { #header { font-size: 10.5px; } }
+           @media (max-width: 900px) { #header { font-size: 9.5px; letter-spacing: .3px; } }
+           @media (max-width: 680px) { #header { display: none; }
+                                        #ui, #github { top: 26px; } }
 
          /* --- Zen mode -----------------------------------------------------
               Only the vista — plus the one button that brings the instruments back.
@@ -370,35 +388,9 @@
      </style>
 </head>
 <body id="body">
-     <div id="ui">
-         <h1>Jupiter from the Inside</h1>
-        <div id="subtitle">triangulated geodesic sphere &amp; Cassini / Juno maps</div>
-         <p>
-            <b>Mouse</b> steers (push down &rarr; look down) &bull; inertia drifts back to Jupiter&rsquo;s spin<br>
-            <b>P</b> view &bull; <b>V</b> navigation data &bull; <b>G</b> graticule &bull; <b>T</b> look at SUN<br>
-            <b>H J K L</b> motion &bull; <b>S D</b> / wheel zoom &bull; <b>R</b> reset &bull; <b>F</b> fullscreen &bull; <b>Z</b> zen<br>
-            <b>H J K L</b> motion has no button &mdash; the pointer steers. Every key above
-             answers to the instrument bar at the bottom right &rsaquo;
-         </p>
-         <div id="mode-label">&mdash;</div>
-         <div id="credit">&mdash;</div>
-     </div>
-
-     <div id="mode-announce"><div class="name"></div><div class="src"></div></div>
-
-     <div id="telemetry">
-       <div class="head">Navigation data</div>
-       <div><span class="k">&lambda; azimuth</span> <span class="v" id="t-lam">+000.0&deg;</span>
-        &nbsp;<span class="k">&beta; elevation</span> <span class="v" id="t-beta">+00.0&deg;</span></div>
-       <div><span class="k">|&omega;| rate</span> <span class="v" id="t-omega">0.00&deg;/s</span>
-        &nbsp;<span class="k">FOV</span> <span class="v" id="t-fov">75&deg;</span></div>
-       <div><span class="k">&lambda;&#775; azimuth</span> <span class="v" id="t-olam">+00.00&deg;/s</span>
-        &nbsp;<span class="k">&beta;&#775; elevation</span> <span class="v" id="t-obeta">+00.00&deg;/s</span></div>
-       <div><span class="k">&odot; SUN</span> <span class="v" id="t-sun">+090.0&deg; / +00.0&deg;</span>
-        &nbsp;<span class="k">bearing</span> <span class="v" id="t-sunbrg">&mdash;</span></div>
-        </div>
-
-         <div id="footer">
+              <!-- Copyleft, licence, source and imagery provenance: the attribution
+            line the instrument bar used to overlap now heads the page. -->
+          <header id="header">
            <!-- The copyleft symbol (🄯), drawn inline so it matches the other HUD marks -->
            <svg class="copyleft" viewBox="0 0 24 24" role="img" aria-label="Copyleft">
              <circle cx="12" cy="12" r="10.2" fill="none" stroke="currentColor" stroke-width="1.9"></circle>
@@ -416,9 +408,27 @@
               target="_blank" rel="noopener">Source</a> &bull;
            imagery <a href="https://github.com/laurentperrinet/retipuj/blob/main/README.md#-data-sources--licensing"
               target="_blank" rel="noopener">NASA / SWRI / floppastrogeo</a>
-         </div>
+         </header>
 
-       <!-- GitHub mark (Octicons, MIT) — the door to the source repository -->
+<div id="ui">
+         <h1>Jupiter from the Inside</h1>
+        <div id="subtitle">triangulated geodesic sphere &amp; Cassini / Juno maps</div>         <div id="mode-label">&mdash;</div>
+         <div id="credit">&mdash;</div>
+     </div>
+
+     <div id="mode-announce"><div class="name"></div><div class="src"></div></div>
+
+     <div id="telemetry">
+       <div class="head">Navigation data</div>
+       <div><span class="k">&lambda; azimuth</span> <span class="v" id="t-lam">+000.0&deg;</span>
+        &nbsp;<span class="k">&beta; elevation</span> <span class="v" id="t-beta">+00.0&deg;</span></div>
+       <div><span class="k">|&omega;| rate</span> <span class="v" id="t-omega">0.00&deg;/s</span>
+        &nbsp;<span class="k">FOV</span> <span class="v" id="t-fov">75&deg;</span></div>
+       <div><span class="k">&lambda;&#775; azimuth</span> <span class="v" id="t-olam">+00.00&deg;/s</span>
+        &nbsp;<span class="k">&beta;&#775; elevation</span> <span class="v" id="t-obeta">+00.00&deg;/s</span></div>
+       <div><span class="k">&odot; SUN</span> <span class="v" id="t-sun">+090.0&deg; / +00.0&deg;</span>
+        &nbsp;<span class="k">bearing</span> <span class="v" id="t-sunbrg">&mdash;</span></div>
+        </div>       <!-- GitHub mark (Octicons, MIT) — the door to the source repository -->
        <a id="github" href="https://github.com/laurentperrinet/retipuj"
           target="_blank" rel="noopener"
           aria-label="Source code on GitHub: laurentperrinet/retipuj"
@@ -431,6 +441,23 @@
 
       <!-- Physical buttons for every keystroke except the pointer-driven motion -->
       <div id="controls" role="toolbar" aria-label="Instrument controls">
+           <!-- Motion: the physical twins of H J K L. Hold to turn, let go and the
+               shell glides back to Jupiter's drift — exactly like the keystroke. -->
+           <div class="grp move" role="group" aria-label="Motion controls">
+             <button class="ctl move" data-act="moveLeft" aria-label="Turn left"
+                     title="H — turn left (press and hold to keep turning)">
+               <kbd>H</kbd><span class="lbl">&#9664; Left</span></button>
+             <button class="ctl move" data-act="moveRight" aria-label="Turn right"
+                     title="L — turn right (press and hold to keep turning)">
+               <kbd>L</kbd><span class="lbl">Right &#9654;</span></button>
+             <button class="ctl move" data-act="moveUp" aria-label="Look up"
+                     title="K — look up (press and hold to keep turning)">
+               <kbd>K</kbd><span class="lbl">&#9650; Up</span></button>
+             <button class="ctl move" data-act="moveDown" aria-label="Look down"
+                     title="J — look down (press and hold to keep turning)">
+               <kbd>J</kbd><span class="lbl">&#9660; Down</span></button>
+           </div>
+           <div class="sep"></div>
         <div class="grp">
           <button class="ctl" data-act="view" aria-label="Cycle view"
                   title="P — cycle the shell view (Shift-click steps backwards)">
@@ -514,6 +541,8 @@ const KEY_ACCEL           = 3.0;     // rad/s rate reached with H/J/K/L
 const MAX_SPEED         = 2.8;      // rad/s hard cap (~160°/s)
 const IDLE_TAU          = 3.6;      // s — glide back to the planetary drift
 const DRIFT_AZ_DEG_S    = 0.85;     // °/s prograde drift (Jupiter-like spin feel)
+const HEADING_SAMPLE_S    = 0.02;        // s — symmetric sample of the path about now
+const ARROW_MIN_RATE_DEG  = 0.02;        // °/s of real rotation too slow to point at
 const ZOOM_SENSITIVITY   = 0.06;
 const ZOOM_RATE_DPS       = 34;      // °/s while S or D is held
 const ZOOM_STEP_DEG    = 6;          // ° per click of the Wider / Tighter button
@@ -885,7 +914,7 @@ const el = {
   dot: document.getElementById('center-dot'),
   hud: document.getElementById('hud'),
   ui: document.getElementById('ui'),
-  footer: document.getElementById('footer'),
+  header: document.getElementById('header'),
   github: document.getElementById('github'),
   tLam: document.getElementById('t-lam'),
   tBeta: document.getElementById('t-beta'),
@@ -962,6 +991,8 @@ function slewTo(lam, beta, dur) {
 const easeInOut = t => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
 const keys = new Set();
+const heldMotionKeys = new Set();     // motion keys currently held on the bar
+let motionHeld = 0;                   // > 0 parks the pointer: the bar is steering
 function step(dt) {
   if (slew) {
     slew.t += dt;
@@ -975,7 +1006,7 @@ function step(dt) {
     // Zen mode does not pause it — the vista stays alive under the pointer;
     // only hovering the instrument bar parks the pointer.
     let wantLam = 0, wantBeta = 0;
-    if (!mouse.overUI && performance.now() - mouse.seen < 700) {
+    if (!mouse.overUI && !motionHeld && performance.now() - mouse.seen < 700) {
       const gain = MOUSE_SENSITIVITY * (mouse.down ? DRAG_MULTIPLIER : 1);
       const ox = mouse.x - window.innerWidth / 2;
       const oy = mouse.y - window.innerHeight / 2;
@@ -1051,16 +1082,13 @@ function resizeHud() {
   hctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 
-const _v = new THREE.Vector3(), _c = new THREE.Vector3();
+const _c = new THREE.Vector3();
 function camSpace(dir) {                 // camera space: forward is −Z
   camera.updateMatrixWorld();
   return _c.copy(dir).applyQuaternion(_q1.copy(camera.quaternion).invert());
 }
-function toScreen(dir) {                 // → { x, y, front }
-  const c = camSpace(dir);
-  const front = c.z < 0;
-  _v.copy(dir).project(camera);
-  return { x: (_v.x * 0.5 + 0.5) * innerWidth, y: (-_v.y * 0.5 + 0.5) * innerHeight, front };
+function dirIsAstern(dir) {                     // behind the head: no edge worth pointing at
+  return camSpace(dir).z > 0.985;                 // …within ~10° of dead astern
 }
 function dirIsAhead(dir) {
   const c = camSpace(dir);
@@ -1071,17 +1099,54 @@ function dirIsAhead(dir) {
 function edgePoint(dir) {                    // clamp a rear/off-frame bearing
   const q = camera.quaternion.clone().invert();
   const c = dir.clone().applyQuaternion(q);    // camera space, −Z forward
-  if (c.z > 0) c.z = -Math.abs(c.z) - 0.08;
+  if (c.z > -1e-4) c.z = -Math.abs(c.z) - 0.08;  // on or behind the eye: keep the bearing
   const tanHalf = Math.tan((nav.fov * DEG) / 2);
   const aspect = innerWidth / innerHeight;
   let nx = c.x / -c.z / (tanHalf * aspect);
   let ny = c.y / -c.z / tanHalf;
-  const m = Math.max(Math.abs(nx), Math.abs(ny)) || 1;
+  let m = Math.max(Math.abs(nx), Math.abs(ny));
+  if (m < 1e-4) {                                   // dead astern: the perspective has
+    const th = Math.atan2(c.y, c.x);                 // nothing to say about a bearing, so
+    nx = Math.cos(th); ny = Math.sin(th);             // take the horizontal one and pin it
+    m = Math.max(Math.abs(nx), Math.abs(ny));         // to the rim of the frame
+  }
   const k = 0.93 / m;
   nx *= k; ny *= k;
   return { x: (nx * 0.5 + 0.5) * innerWidth, y: (-ny * 0.5 + 0.5) * innerHeight };
 }
 const _q1 = new THREE.Quaternion();
+
+// Where the view is *going* is not hypot(λ̇, β̇): on the sphere only cos β of an
+// azimuthal rate really rotates the view, so spinning λ near a pole is a lot of
+// number and almost no motion — and an arrow drawn from that phantom motion ends
+// up pointing wherever the sub-pixel noise happens to lean. So measure the path
+// instead: the chord between two samples taken symmetrically about now, which is
+// the exact tangent of a steady turn and folds over the poles with dirFromAzEl().
+// Its length gives the true angular rate; when that is a whisper the arrow hides.
+const _hk = new THREE.Vector3(), _hp = new THREE.Vector3(), _hf = new THREE.Vector3();
+const _hr = new THREE.Vector3(), _hu = new THREE.Vector3();
+
+function pathChord(out) {                          // sample the path about now
+  const d = HEADING_SAMPLE_S;
+  dirFromAzEl(nav.lam + nav.olam * d, nav.beta + nav.obeta * d, _hk);
+  dirFromAzEl(nav.lam - nav.olam * d, nav.beta - nav.obeta * d, _hp);
+  return out.copy(_hk).sub(_hp);
+}
+function viewRate() {                              // real rotation of the view, rad/s
+  return Math.asin(clamp(pathChord(_hf).length() / 2, 0, 1)) / HEADING_SAMPLE_S;
+}
+function travelHeading() {                         // unit screen tangent, or null
+  camera.updateMatrixWorld();
+  const t = pathChord(_hk);
+  dirFromAzEl(nav.lam, nav.beta, _hf);
+   t.addScaledVector(_hf, -t.dot(_hf));                 // keep the sideways part only
+   _hr.setFromMatrixColumn(camera.matrixWorld, 0);       // screen +x …
+   _hu.setFromMatrixColumn(camera.matrixWorld, 1);       // … and +y (up)
+  const x = t.dot(_hr), y = -t.dot(_hu);                 // the HUD measures y downward
+  const n = Math.hypot(x, y);
+  return n > 1e-12 ? { x: x / n, y: y / n } : null;
+}
+
 
 function drawHud() {
   hctx.clearRect(0, 0, innerWidth, innerHeight);
@@ -1092,7 +1157,9 @@ function drawHud() {
 
     // — off-screen SUN chevron —
   if (sunGroup.visible) {
-    if (!dirIsAhead(SUN_DIR)) {
+     // dead astern there is no honest bearing to point at, so the chevron stays
+     // out of the way and the telemetry plate carries the "turn →" hint instead
+    if (!dirIsAhead(SUN_DIR) && !dirIsAstern(SUN_DIR)) {
       const p = edgePoint(SUN_DIR);
       const ang = Math.atan2(p.y - cy, p.x - cx);
       hctx.save();
@@ -1132,21 +1199,18 @@ function drawHud() {
   hctx.stroke();
   hctx.restore();
 
-    // — velocity vector: look-ahead point → screen —
-  const speed = Math.hypot(nav.olam, nav.obeta);          // rad/s
-  const degS = speed / DEG;
+     // — velocity vector: the tangent of the path we are actually on —
+  const rate = viewRate();                               // rad/s — cos β weighed, not hypot
+  const degS = rate / DEG;
+  const heading = travelHeading();                  // unit screen tangent, or null
   let tip = { x: cx, y: cy };
-  if (speed > 1e-5) {
-    const k = 0.4;                                        // s of look-ahead
-    const ahead = dirFromAzEl(nav.lam + nav.olam * k, nav.beta + nav.obeta * k);
-    const p = toScreen(ahead);
-    let dx = p.x - cx, dy = p.y - cy;
-    if (!isFinite(dx) || !isFinite(dy) || Math.hypot(dx, dy) < 1) {
-      const e = edgePoint(ahead); dx = e.x - cx; dy = e.y - cy;
-              }
-    const n = Math.hypot(dx, dy) || 1;
-    const len = 0.11 * minDim + 0.33 * minDim * Math.sqrt(clamp(speed / MAX_SPEED, 0, 1));
-    tip = { x: cx + (dx / n) * len, y: cy + (dy / n) * len };
+  if (rate > ARROW_MIN_RATE_DEG * DEG && heading) {
+    const dx = heading.x, dy = heading.y;
+     // length: a resting leg of 0.11·min plus a fast leg that grows as √|ω| — now
+     // with the real |ω|, so an arrow that looks fast genuinely is fast
+    const len = 0.11 * minDim +
+                 0.33 * minDim * Math.sqrt(clamp(rate / MAX_SPEED, 0, 1));
+    tip = { x: cx + dx * len, y: cy + dy * len };
 
     hctx.save();
     hctx.lineCap = 'round';
@@ -1201,7 +1265,7 @@ function updateTelemetry(now) {
     return b / DEG; })();
   el.tLam.textContent = fmtDeg(wrapPi(nav.lam) / DEG, 3);
   el.tBeta.textContent = fmtDeg(betaShown, 2);
-  el.tOmega.textContent = (Math.hypot(nav.olam, nav.obeta) / DEG).toFixed(2) + '°/s';
+  el.tOmega.textContent = (viewRate() / DEG).toFixed(2) + '°/s';    // true rotation
   el.tOLam.textContent = fmtRate(nav.olam);
   el.tOBeta.textContent = fmtRate(nav.obeta);
   el.tFov.textContent = nav.fov.toFixed(0) + '°';
@@ -1216,7 +1280,7 @@ function setZen(on) {
   zen = on;
   el.body.classList.toggle('zen-mode', on);
   mouse.down = false;
-  [el.ui, el.footer, el.github, el.telemetry, el.dot, el.hud].forEach(n =>
+  [el.ui, el.header, el.github, el.telemetry, el.dot, el.hud].forEach(n =>
     n.classList.toggle('hidden', on));
   gridGroup.visible = !on && showGrid;
   sunGroup.visible = !on;
@@ -1264,27 +1328,58 @@ function doAction(act, e) {
 }
 
 // Hovering an instrument parks the pointer: pressing a button — or reaching for
-// a footer link — must never whip the camera.
+// a header link — must never whip the camera.
 function parkPointerWhileHovering(node) {
   node.addEventListener('pointerenter', () => { mouse.overUI = true; });
   node.addEventListener('pointerleave', () => { mouse.overUI = false; uiZoom = 0; });
 }
-[controls, el.footer].forEach(parkPointerWhileHovering);
+[controls, el.header].forEach(parkPointerWhileHovering);
+// Motion buttons are the physical twins of H J K L: hold to turn, release and the
+// shell glides back to the planetary drift. They drive the same `keys` set as the
+// keystroke, so rates, speed cap and inertia are all shared.
+const MOVE_ACTS = { moveLeft: 'H', moveRight: 'L', moveUp: 'K', moveDown: 'J' };
+const moveButtons = new Map();                 // printed key arrow its button
+ctlButtons.forEach(b => { const k = MOVE_ACTS[b.dataset.act]; if (k) moveButtons.set(k, b); });
+
+function holdMotionKey(b, on) {
+  const k = MOVE_ACTS[b.dataset.act];
+  if (!k) return;
+  if (on) { keys.add(k); heldMotionKeys.add(k); b.classList.add('on'); }
+  else { keys.delete(k); heldMotionKeys.delete(k); b.classList.remove('on'); }
+  motionHeld = heldMotionKeys.size;
+  if (!motionHeld && !controls.matches(':hover')) mouse.overUI = false;
+}
+function releaseMotionKeys() {              // a stray release must never stick the shell
+  heldMotionKeys.forEach(k => { const b = moveButtons.get(k);
+    if (b) b.classList.remove('on'); keys.delete(k); });
+  heldMotionKeys.clear();
+  motionHeld = 0;
+}
+
 ctlButtons.forEach(b => {
   const act = b.dataset.act;
   const zoomDir = act === 'zoomIn' ? -1 : act === 'zoomOut' ? 1 : 0;
-  b.addEventListener('pointerdown', () => {
+  const isMove = act in MOVE_ACTS;
+  b.addEventListener('pointerdown', e => {
     mouse.overUI = true;
+    if (isMove) {                            // hold to turn; the pointer stays parked
+      holdMotionKey(b, true);
+      try { b.setPointerCapture(e.pointerId); } catch (err) { /* capture is a bonus */ }
+      return;
+     }
     uiZoom = zoomDir; uiZoomFrom = performance.now();
     });
   b.addEventListener('pointerup', () => {
-    if (zoomDir && performance.now() - uiZoomFrom < 220)      // a click, not a hold
+    if (isMove) { holdMotionKey(b, false); return; }
+    if (zoomDir && performance.now() - uiZoomFrom < 220)        // a click, not a hold
       nav.fov = clamp(nav.fov + zoomDir * ZOOM_STEP_DEG, FOV_MIN, FOV_MAX);
     uiZoom = 0;
     });
-  b.addEventListener('click', e => { if (!zoomDir) doAction(act, e); });
+  b.addEventListener('pointercancel', () => { if (isMove) holdMotionKey(b, false); });
+  b.addEventListener('click', e => { if (!zoomDir && !isMove) doAction(act, e); });
 });
-addEventListener('pointerup', () => (uiZoom = 0));
+addEventListener('pointerup', () => { uiZoom = 0; releaseMotionKeys(); });
+addEventListener('pointercancel', () => { uiZoom = 0; releaseMotionKeys(); });
 
 function reportFailure(label, url) {
   let n = document.getElementById('load-error');
@@ -1339,7 +1434,8 @@ addEventListener('keydown', e => {
   for (const c of keyChars(e)) if (MOVE_KEYS.has(c)) keys.add(c);
 }, { passive: false });
 addEventListener('keyup', e => { for (const c of keyChars(e)) keys.delete(c); });
-addEventListener('blur', () => { keys.clear(); mouse.down = false; uiZoom = 0; });
+addEventListener('blur', () => { keys.clear(); releaseMotionKeys();
+  mouse.down = false; uiZoom = 0; });
 
 addEventListener('resize', () => {
   camera.aspect = innerWidth / innerHeight;
