@@ -2,6 +2,8 @@
 
 An immersive 3D visualization that allows you to explore the surface of Jupiter from the inside.
 
+- https://neuromatch.social/@laurentperrinet/117347485669197298
+
 ## 🌌 The Concept
 
 Instead of looking at the planet from space, this project places you at the center of Jupiter. You are surrounded by a massive spherical shell representing the planetary surface, allowing you to navigate the clouds and storm systems from a central perspective. (Disclaimer — this is a simulation, not a scientific model of Jupiter's interior. Jupiter is not empty, and the interior is not hollow. Right?)
