@@ -6,6 +6,8 @@ spherical shell.
 
 Single-file web app: [`index.html`](index.html), no build step, no bundler.
 
+- https://neuromatch.social/@laurentperrinet/117347485669197298
+
 ## 🌌 The Concept
 
 Instead of looking at the planet from space, this project places you at the center of Jupiter.
